@@ -6,6 +6,9 @@
 <title>BAH med stock</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <style>
 :root{
   --bg:#E8EDF1; --panel:#FFFFFF; --ink:#15232E; --muted:#5B6B78; --line:#CBD5DD; --line-soft:#E3E9EE;
@@ -239,8 +242,11 @@ const TYPE_LABEL = {dispense:'จ่ายยา', add:'เติมสต็อ
 function errText(e){
   const c = e && e.code;
   if (c === 'invalid_argument') return 'ไม่มีสิทธิ์บันทึกข้อมูล ต้องได้รับสิทธิ์ Contributor (แก้ไขได้) หรือข้อมูลไม่ถูกต้อง';
-  if (c === 'quota_exceeded') return 'ฐานข้อมูลเต็ม เพิ่มรายการไม่ได้ ' + (e.message || '');
+  if (c === 'quota_exceeded' || c === 'resource-exhausted') return 'ฐานข้อมูลเต็ม เพิ่มรายการไม่ได้ ' + (e.message || '');
   if (c === 'revoked') return 'การเชื่อมต่อถูกยกเลิก กรุณาเปิดหน้านี้ใหม่';
+  if (c === 'permission-denied') return 'ไม่มีสิทธิ์บันทึกข้อมูล ตรวจสอบ Firestore Security Rules ในโปรเจกต์ Firebase ของคุณ';
+  if (c === 'unavailable' || c === 'unauthenticated') return 'เชื่อมต่อฐานข้อมูลไม่ได้ ตรวจสอบอินเทอร์เน็ตหรือการตั้งค่า Firebase';
+  if (c === 'not-found') return 'ไม่พบรายการนี้ในฐานข้อมูล (อาจถูกลบไปแล้ว)';
   return 'บันทึกไม่สำเร็จ (' + (e && e.message ? e.message : e) + ') กรุณาลองใหม่';
 }
 
@@ -507,6 +513,40 @@ async function addDrugWithBarcode(fields, qty){
   return d;
 }
 
+/* ================= Firebase (self-hosted online sync) ================= */
+const FB_KEY = 'bah.firebaseConfig';
+function getFirebaseConfig(){ try{ const s = localStorage.getItem(FB_KEY); return s ? JSON.parse(s) : null; }catch(e){ return null; } }
+function saveFirebaseConfig(cfg){ localStorage.setItem(FB_KEY, JSON.stringify(cfg)); }
+function clearFirebaseConfig(){ try{ localStorage.removeItem(FB_KEY); }catch(_){} }
+function wrapFirestore(fs){
+  function wrapDoc(ref){
+    return {
+      async get(){ const d = await ref.get(); return {id: ref.id, exists: !!d.exists, data: () => d.data()}; },
+      set: obj => ref.set(obj),
+      update: obj => ref.update(obj),
+      delete: () => ref.delete(),
+      async acquire(){ return {acquired: true}; }
+    };
+  }
+  function wrapCol(ref){
+    return {
+      onSnapshot(cb, onErr){ return ref.onSnapshot(s => cb({docs: s.docs.map(d => ({id: d.id, data: () => d.data()}))}), onErr); },
+      async get(){ const s = await ref.get(); return {docs: s.docs.map(d => ({id: d.id, data: () => d.data()}))}; },
+      doc(id){ return wrapDoc(ref.doc(id)); }
+    };
+  }
+  return {collection: name => wrapCol(fs.collection(name)), doc: path => wrapDoc(fs.doc(path))};
+}
+async function tryConnectFirebase(){
+  const cfg = getFirebaseConfig();
+  if (!cfg || typeof firebase === 'undefined') return null;
+  try{
+    if (!firebase.apps.length) firebase.initializeApp(cfg);
+    try{ if (firebase.auth) await firebase.auth().signInAnonymously(); }catch(_){ /* Anonymous auth optional */ }
+    return wrapFirestore(firebase.firestore());
+  }catch(e){ console.error('Firebase connect failed', e); return e; }
+}
+
 /* ================= Status / banner ================= */
 function setSync(kind, code){
   const el = $('#sync'); if (!el) return;
@@ -523,8 +563,10 @@ function updateBanner(){
   const el = $('#banner'); let h = '';
   if (!storageOK) h += '<div class="banner red">เบราว์เซอร์นี้ไม่อนุญาตให้เก็บข้อมูลถาวร ข้อมูลจะหายเมื่อปิดหน้านี้ กรุณา Export ไฟล์สำรองไว้</div>';
   if (isUnlocked() && !DB.auth) h += '<div class="banner">ยังใช้รหัสผ่านตั้งต้นอยู่ กรุณาเปลี่ยนรหัสผ่านที่ <a href="#" id="bnSet">ตั้งค่า</a></div>';
+  if (isUnlocked() && MODE === 'local') h += '<div class="banner">เครื่องนี้ยังไม่ได้เชื่อมต่อระบบซิงก์ออนไลน์ ข้อมูลจะไม่ถูกแชร์กับเครื่องอื่น ตั้งค่าได้ที่ <a href="#" id="bnFb">ตั้งค่า → ระบบซิงก์ออนไลน์</a></div>';
   el.innerHTML = h;
   const l = $('#bnSet'); if (l) l.addEventListener('click', e => { e.preventDefault(); openSettings(); });
+  const f = $('#bnFb'); if (f) f.addEventListener('click', e => { e.preventDefault(); openSettings(); });
 }
 
 /* ================= Passcode gate ================= */
@@ -667,7 +709,6 @@ function confirmBox(title, msg, o){
       {label: o.okText || 'ตกลง', cls: o.danger ? 'danger' : 'primary', primary: true, onClick: m => { m.close(); o.onOk && o.onOk(); }}
     ]});
 }
-/* fields: [{id,label,value,type,hint,placeholder,inputmode}] ; onSubmit may be async and return an error string */
 function formModal(o){
   const html = (o.top || '') + o.fields.map(f =>
     '<div class="field" id="ff_' + f.id + '"><label for="fm_' + f.id + '">' + esc(f.label) + '</label>' +
@@ -1422,7 +1463,6 @@ function changePassModal(){
       if (v.n === v.c) return 'รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสเดิม';
       if (v.n !== v.r) return 'รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน';
       const salt = uid(), auth = {salt, hash: sha256hex(salt + '|' + v.n), changedAt: Date.now()};
-      // keep THIS session unlocked before writing: the write echoes back through the live snapshot immediately
       const oldTok = unlockTok;
       unlockTok = sha256hex('tok|' + auth.hash);
       try{ sessionStorage.setItem('bah.unlock', unlockTok); }catch(_){}
@@ -1432,6 +1472,22 @@ function changePassModal(){
       toast('เปลี่ยนรหัสผ่านแล้ว เครื่องอื่นต้องใส่รหัสใหม่จึงจะเข้าใช้งานได้', 'ok');
     }});
 }
+function firebaseStatusHTML(){
+  const cfg = getFirebaseConfig();
+  if (MODE === 'cloud' && cfg) return '<div class="msg info" style="font-size:14px">เชื่อมต่อแล้ว · โปรเจกต์ Firebase: <b>' + esc(cfg.projectId || '') + '</b></div>';
+  if (cfg && MODE !== 'cloud') return '<div class="msg danger" style="font-size:14px">มีการตั้งค่าไว้ แต่เชื่อมต่อไม่สำเร็จ ตรวจสอบค่าที่วาง หรือ Firestore Rules</div>';
+  return '<div class="msg warn" style="font-size:14px">ยังไม่ได้เชื่อมต่อ เครื่องนี้ทำงานแบบเดี่ยว ไม่ซิงก์กับเครื่องอื่น</div>';
+}
+function openFirebaseHelp(){
+  alertBox('วิธีตั้งค่าระบบซิงก์ออนไลน์ (Firebase, ฟรี)', '', {width: 600, okText: 'เข้าใจแล้ว', html:
+    '<ol style="padding-left:20px;margin:0"><li>ไปที่ <a href="https://console.firebase.google.com" target="_blank" rel="noopener">console.firebase.google.com</a> → สร้างโปรเจกต์ใหม่ (ไม่ต้องผูกบัตร)</li>' +
+    '<li>เมนูซ้าย Build → Firestore Database → Create database → เลือกโหมด Production</li>' +
+    '<li>แท็บ Rules ของ Firestore วางกฎนี้แล้วกด Publish:<br><code style="font-size:13px;display:block;background:#F3F6F8;padding:8px;border-radius:6px;margin-top:4px;white-space:pre-wrap">rules_version = \'2\';\nservice cloud.firestore {\n  match /databases/{db}/documents {\n    match /{doc=**} { allow read, write: if request.auth != null; }\n  }\n}</code></li>' +
+    '<li>เมนูซ้าย Build → Authentication → Get started → แท็บ Sign-in method → เปิดใช้ <b>Anonymous</b></li>' +
+    '<li>คลิกรูปเฟือง (Project settings) → เลื่อนลงหา “Your apps” → กด “</>” (Web) → ตั้งชื่อ → Register app</li>' +
+    '<li>คัดลอกก้อนโค้ด <code>firebaseConfig</code> ทั้งหมดที่ขึ้นมา (ขึ้นต้นด้วย <code>{ apiKey: ...}</code>) มาวางในช่องด้านล่างนี้ แล้วกด “บันทึกและเชื่อมต่อ”</li></ol>' +
+    '<p class="msg warn" style="margin-top:12px;font-size:14px">ข้อควรระวัง: รหัสผ่านของโปรแกรมกันหน้าจอเข้าใช้งานเท่านั้น ไม่ได้กันฐานข้อมูล ทำตามขั้นตอนข้างต้นให้ครบ (โดยเฉพาะ Rules และ Anonymous sign-in) เพื่อกันไม่ให้คนนอกเขียนข้อมูลตรงเข้าฐานข้อมูลได้</p>'});
+}
 function openSettings(){
   openModal({title: 'ตั้งค่า', width: 580,
     html: '<p class="msg info" style="margin-bottom:14px">' + (MODE === 'cloud' ? 'ข้อมูลเก็บบนเซิร์ฟเวอร์และซิงก์ทุกเครื่อง แนะนำให้ Export สำรองเป็นระยะ' : 'ข้อมูลถูกเก็บในเบราว์เซอร์เครื่องนี้ กรุณา Export สำรองไว้เป็นประจำ') + '</p>' +
@@ -1440,6 +1496,11 @@ function openSettings(){
       '<div class="field" style="max-width:320px"><label for="sLock">ล็อกอัตโนมัติหลังไม่ใช้งาน (นาที, 0 = ปิด)</label><input id="sLock" type="text" inputmode="numeric" data-noenter="1" value="' + esc(DB.settings.autoLockMin) + '"></div>' +
       '<div class="sec-title">กฎการตัดสต็อก</div>' +
       '<div class="switch"><input type="checkbox" id="sNeg"' + (DB.settings.allowNegative ? ' checked' : '') + '><label for="sNeg">อนุญาตให้จ่ายยาเกินสต็อก (ยอดติดลบได้)</label></div>' +
+      '<div class="sec-title">ระบบซิงก์ออนไลน์ (Firebase)</div>' +
+      firebaseStatusHTML() +
+      '<div class="field" style="margin-top:10px"><label for="fbConfig">วางค่า firebaseConfig จาก Firebase Console</label><textarea id="fbConfig" rows="4" placeholder="{ apiKey: &quot;...&quot;, authDomain: &quot;...&quot;, projectId: &quot;...&quot;, ... }"></textarea></div>' +
+      '<div class="form-err" id="fbErr" role="alert"></div>' +
+      '<div class="setrow"><button type="button" class="btn primary" id="fbSave">บันทึกและเชื่อมต่อ</button><button type="button" class="btn" id="fbHelp">วิธีตั้งค่า</button>' + (getFirebaseConfig() ? '<button type="button" class="btn" id="fbClear" style="color:var(--danger);border-color:var(--danger)">ยกเลิกการเชื่อมต่อ</button>' : '') + '</div>' +
       '<div class="sec-title">ข้อมูล</div>' +
       '<div class="setrow"><button type="button" class="btn" id="sExpAll">Export ข้อมูลทั้งหมด (Excel / CSV)</button><button type="button" class="btn" id="sExpJ">สำรองข้อมูล (.json)</button></div>' +
       (MODE === 'local' ? '<div class="setrow"><button type="button" class="btn" id="sImp">นำเข้าจากไฟล์สำรอง (.json)</button><input type="file" id="sFile" accept=".json,application/json" hidden></div>' : '<p class="sub">การนำเข้าไฟล์สำรองใช้ได้เฉพาะโหมดเครื่องเดียว เพื่อป้องกันข้อมูลซ้ำในระบบออนไลน์</p>'),
@@ -1460,6 +1521,26 @@ function openSettings(){
         if (!Number.isFinite(n) || n < 0){ e.target.value = DB.settings.autoLockMin; toast('กรอกจำนวนนาทีเป็นตัวเลข 0 ขึ้นไป', 'err'); return; }
         try{ await saveSettings({autoLockMin: Math.round(n)}); toast('บันทึกการล็อกอัตโนมัติแล้ว', 'ok'); }catch(er){ toast(errText(er), 'err'); }
       });
+      const fbHelp = $('#fbHelp', m.el); if (fbHelp) fbHelp.addEventListener('click', openFirebaseHelp);
+      const fbSave = $('#fbSave', m.el);
+      if (fbSave) fbSave.addEventListener('click', () => {
+        const raw = $('#fbConfig', m.el).value.trim();
+        const err = $('#fbErr', m.el);
+        if (!raw){ err.textContent = 'กรุณาวางค่า firebaseConfig ก่อน'; return; }
+        let cfg;
+        try{ cfg = new Function('return (' + raw + ')')(); }
+        catch(e){ err.textContent = 'อ่านค่าที่วางไม่ได้ ตรวจสอบว่าคัดลอกมาทั้งก้อนจาก Firebase Console'; return; }
+        if (!cfg || !cfg.apiKey || !cfg.projectId){ err.textContent = 'ค่านี้ดูไม่เหมือน firebaseConfig (ต้องมี apiKey และ projectId)'; return; }
+        saveFirebaseConfig(cfg);
+        toast('บันทึกแล้ว กำลังเชื่อมต่อใหม่…', 'ok');
+        setTimeout(() => location.reload(), 400);
+      });
+      const fbClear = $('#fbClear', m.el);
+      if (fbClear) fbClear.addEventListener('click', () => {
+        confirmBox('ยกเลิกการเชื่อมต่อ Firebase?', '', {danger: true, okText: 'ตกลง ยกเลิกการเชื่อมต่อ', tone: 'danger',
+          html: 'เครื่องนี้จะกลับไปทำงานแบบเดี่ยว ไม่ซิงก์กับเครื่องอื่น ข้อมูลบน Firebase จะยังอยู่ ไม่ถูกลบ',
+          onOk: () => { clearFirebaseConfig(); toast('ยกเลิกการเชื่อมต่อแล้ว กำลังโหลดใหม่…', 'ok'); setTimeout(() => location.reload(), 400); }});
+      });
     }});
 }
 $('#btnSettings').addEventListener('click', openSettings);
@@ -1469,33 +1550,22 @@ async function boot(){
   updateBanner();
   setSync('connecting');
   view.innerHTML = '<div class="panel empty">กำลังเชื่อมต่อ…</div>';
-  let db = null;
-  try{
-    if (window.claude && typeof window.claude.use === 'function'){
-      try{ dlCap = await window.claude.use('downloads'); }catch(_){}
-      db = await window.claude.use('db');
-    }
-  }catch(_){ db = null; }
+  let db = null, fbErr = null;
+  if (!db){
+    const r = await tryConnectFirebase();
+    if (r && typeof r === 'object' && r.collection) db = r; else if (r) fbErr = r;
+  }
   if (db){
     MODE = 'cloud'; dbc = db;
     startCloud(db);
   } else {
     MODE = 'local'; loadLocal(); setSync('local'); applyGate();
+    if (fbErr) toast('เชื่อมต่อ Firebase ไม่สำเร็จ: ' + (fbErr.message || fbErr), 'err');
   }
 }
 boot();
 window.__app = {get DB(){ return DB; }, get MODE(){ return MODE; }, code128Values, C128, barcodeSVG, sha256hex, breakdown, breakdownText};
 })();
 </script>
-  const firebaseConfig = {
-  apiKey: "AIzaSyDb5AZj36w0vzIAL8wIOa-V-Gefaiidz_8",
-  authDomain: "bah-medstock.firebaseapp.com",
-  databaseURL: "https://bah-medstock-default-rtdb.firebaseio.com",
-  projectId: "bah-medstock",
-  storageBucket: "bah-medstock.firebasestorage.app",
-  messagingSenderId: "888549060234",
-  appId: "1:888549060234:web:a834283a11b35fa82bc773",
-  measurementId: "G-7YT50QM9E6"
-};
 </body>
 </html>
