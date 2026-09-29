@@ -223,6 +223,18 @@ const SEED = [{"house": "30-ข-1", "name": "Serlift", "barcode": "88526001"}, {
 const SHARE_URL_DEFAULT = "https://natnicha0902.github.io/bah-medstock/";
 const DEFAULT_PASSCODE = '123456';
 
+/* ================= Embedded Firebase Config ================= */
+const EMBEDDED_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDb5AZj36w0vzIAL8wIOa-V-Gefaiidz_8",
+  authDomain: "bah-medstock.firebaseapp.com",
+  databaseURL: "https://bah-medstock-default-rtdb.firebaseio.com",
+  projectId: "bah-medstock",
+  storageBucket: "bah-medstock.firebasestorage.app",
+  messagingSenderId: "888549060234",
+  appId: "1:888549060234:web:a834283a11b35fa82bc773",
+  measurementId: "G-7YT50QM9E6"
+};
+
 /* ================= Utilities ================= */
 const $ = (s, el=document) => el.querySelector(s);
 const $$ = (s, el=document) => Array.from(el.querySelectorAll(s));
@@ -515,7 +527,13 @@ async function addDrugWithBarcode(fields, qty){
 
 /* ================= Firebase (self-hosted online sync) ================= */
 const FB_KEY = 'bah.firebaseConfig';
-function getFirebaseConfig(){ try{ const s = localStorage.getItem(FB_KEY); return s ? JSON.parse(s) : null; }catch(e){ return null; } }
+function getFirebaseConfig(){
+  try{
+    const s = localStorage.getItem(FB_KEY);
+    if (s) return JSON.parse(s);
+  }catch(e){}
+  return EMBEDDED_FIREBASE_CONFIG || null;
+}
 function saveFirebaseConfig(cfg){ localStorage.setItem(FB_KEY, JSON.stringify(cfg)); }
 function clearFirebaseConfig(){ try{ localStorage.removeItem(FB_KEY); }catch(_){} }
 function wrapFirestore(fs){
