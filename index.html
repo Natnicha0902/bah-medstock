@@ -61,7 +61,7 @@ h2{font-size:18px;margin:0 0 10px}
 .btn.danger:hover{background:#8F1B12}
 .btn.big{font-size:18px;min-height:52px;width:100%;font-weight:700}
 .btnrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-input[type=text],input[type=number],input[type=search],input[type=password],input[type=date],input:not([type]),textarea,select{width:100%;border:1.5px solid #9FB0BC;border-radius:6px;padding:10px 12px;background:#fff;min-height:44px}
+input[type=text],input[type=number],input[type=search],input[type=password],input[type=date],input[type=time],input:not([type]),textarea,select{width:100%;border:1.5px solid #9FB0BC;border-radius:6px;padding:10px 12px;background:#fff;min-height:44px}
 input:focus,textarea:focus,select:focus{border-color:var(--brand)}
 .err input,input.err{border-color:var(--danger);background:var(--danger-soft)}
 label{display:block;font-weight:600;margin-bottom:5px}
@@ -140,6 +140,8 @@ label{display:block;font-weight:600;margin-bottom:5px}
 .backlink{display:inline-block;margin-bottom:10px;color:var(--brand);font-weight:600;text-decoration:none}
 .backlink:hover{text-decoration:underline}
 .summary{display:flex;gap:28px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px}
+.bottom-summary{margin-top:16px;padding:16px;background:var(--brand-soft);border:2px solid var(--brand);border-radius:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.bottom-summary .stk-box{text-align:right}
 .overlay{position:fixed;inset:0;background:rgba(15,30,40,.55);display:flex;align-items:flex-start;justify-content:center;padding:6vh 14px;overflow:auto;z-index:100}
 .modal{background:#fff;border-radius:10px;width:100%;max-width:520px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
 .modal h2{font-size:20px;margin-bottom:14px}
@@ -183,7 +185,7 @@ label{display:block;font-weight:600;margin-bottom:5px}
 .date-filter{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;background:#F1F5F8;padding:12px 16px;border-radius:8px;border:1px solid var(--line)}
 .date-filter .fgroup{display:flex;align-items:center;gap:6px}
 .date-filter label{margin:0;white-space:nowrap;font-size:14px}
-.date-filter input[type=date]{min-height:38px;padding:4px 8px;width:auto}
+.date-filter input[type=date],.date-filter input[type=time]{min-height:38px;padding:4px 8px;width:auto}
 
 @media print {
   header.top, #banner, .backlink, .btnrow, .act-btns, .date-filter, .toast, .overlay { display: none !important; }
@@ -193,6 +195,7 @@ label{display:block;font-weight:600;margin-bottom:5px}
   .scroll { max-height: none !important; border: none !important; overflow: visible !important; }
   .tbl th { background: #eee !important; color: #000 !important; border-bottom: 2px solid #000 !important; }
   .tbl td { border-bottom: 1px solid #ccc !important; }
+  .bottom-summary { border: 2px solid #000 !important; background: #fff !important; page-break-inside: avoid; }
 }
 
 @media (max-width:980px){
@@ -913,7 +916,8 @@ function logRow3(e){
 function renderHistoryPanel(){
   const body = $('#hp-body');
   if (!body) return;
-  const rows = DB.log.slice(-100);
+  // หน้าหลัก: รายการล่าสุดอยู่ด้านบนสุด
+  const rows = DB.log.slice(-100).reverse();
   body.innerHTML = rows.length
     ? '<table class="tbl"><thead><tr><th>วันที่ / เวลา</th><th>ชื่อยา</th><th class="num">จำนวน</th></tr></thead><tbody>' + rows.map(logRow3).join('') + '</tbody></table>'
     : '<div class="empty">ยังไม่มีประวัติการตัดยอด<br>เมื่อบันทึกการจ่ายยา รายการจะแสดงที่นี่</div>';
@@ -1165,12 +1169,20 @@ function renderHistoryIndex(){
   drawHistIdx();
 }
 
-function filterLogsByDate(list, startStr, endStr){
+function filterLogsByDateTime(list, startD, startT, endD, endT){
   return list.filter(e => {
     const d = new Date(e.ts);
-    const day = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
-    if (startStr && day < startStr) return false;
-    if (endStr && day > endStr) return false;
+    const dayStr = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    const timeStr = pad(d.getHours()) + ':' + pad(d.getMinutes());
+    
+    if (startD){
+      if (dayStr < startD) return false;
+      if (dayStr === startD && startT && timeStr < startT) return false;
+    }
+    if (endD){
+      if (dayStr > endD) return false;
+      if (dayStr === endD && endT && timeStr > endT) return false;
+    }
     return true;
   });
 }
@@ -1181,24 +1193,31 @@ function renderDrugHistory(id){
   
   view.innerHTML =
     '<a class="backlink" href="#/history">กลับไปรายการยา</a>' +
-    '<section class="panel"><div class="summary"><div><div class="sub">ประวัติการตัดยอดของ</div><h1 style="margin:0">' + esc(d.name) + '</h1><div class="sub">บ้านเลขที่ ' + esc(d.house) + '</div></div>' +
-    '<div><div class="sub">คงเหลือปัจจุบัน (' + esc(d.unit || 'เม็ด') + ')</div><div class="bigstock">' + fmt(d.stock) + '</div>' + (hasPack(d) ? '<div class="sub">' + esc(breakdownText(d.stock, d)) + '</div>' : '') + '</div>' +
+    '<section class="panel">' +
+    '<div class="summary"><div><div class="sub">ประวัติการตัดยอดของ</div><h1 style="margin:0">' + esc(d.name) + '</h1><div class="sub">บ้านเลขที่ ' + esc(d.house) + '</div></div>' +
     '<div class="btnrow" style="margin-left:auto">' +
     '<button type="button" class="btn primary" id="btnPrintDH">พิมพ์ประวัติ (Print)</button>' +
     '<button type="button" class="btn" id="expDH">Export</button>' +
     '<a class="btn" href="#/drugs/' + d.id + '" style="text-decoration:none;display:inline-block">ไปหน้าข้อมูลยา</a>' +
     '</div></div>' +
     '<div class="date-filter">' +
-      '<div class="fgroup"><label for="fStart">ตั้งแต่วันที่:</label><input type="date" id="fStart"></div>' +
-      '<div class="fgroup"><label for="fEnd">ถึงวันที่:</label><input type="date" id="fEnd"></div>' +
+      '<div class="fgroup"><label for="fStartD">ตั้งแต่วันที่:</label><input type="date" id="fStartD"><input type="time" id="fStartT"></div>' +
+      '<div class="fgroup"><label for="fEndD">ถึงวันที่:</label><input type="date" id="fEndD"><input type="time" id="fEndT"></div>' +
       '<button type="button" class="btn small" id="btnResetDate">แสดงทั้งหมด</button>' +
     '</div>' +
-    '<div class="scroll" style="max-height:none" id="dhTableBox"></div></section>';
+    '<div class="scroll" style="max-height:none" id="dhTableBox"></div>' +
+    '<div class="bottom-summary">' +
+      '<div><div class="sub" style="color:var(--brand-dk)">สรุปยอด ณ ปัจจุบัน</div><div style="font-size:20px;font-weight:700">' + esc(d.name) + ' (บ้านเลขที่ ' + esc(d.house) + ')</div></div>' +
+      '<div class="stk-box"><div class="sub" style="color:var(--brand-dk)">คงเหลือสุทธิ (' + esc(d.unit || 'เม็ด') + ')</div><div class="bigstock" style="color:var(--brand-dk)">' + fmt(d.stock) + '</div>' + (hasPack(d) ? '<div class="sub" style="font-weight:600">' + esc(breakdownText(d.stock, d)) + '</div>' : '') + '</div>' +
+    '</div>' +
+    '</section>';
 
   const drawTable = () => {
-    const sVal = $('#fStart').value, eVal = $('#fEnd').value;
+    const sD = $('#fStartD').value, sT = $('#fStartT').value;
+    const eD = $('#fEndD').value, eT = $('#fEndT').value;
     const rawList = DB.log.filter(e => e.drugId === id);
-    const list = filterLogsByDate(rawList, sVal, eVal);
+    // หน้าประวัติยา: ให้เรียงจาก เก่า -> ใหม่ (ล่าสุดอยู่ล่างสุด)
+    const list = filterLogsByDateTime(rawList, sD, sT, eD, eT);
     const showPt = is28(d.house) || list.some(e => e.patient);
     
     $('#dhTableBox').innerHTML = list.length
@@ -1212,23 +1231,22 @@ function renderDrugHistory(id){
           (!VOIDED.has(e.id) && e.type !== 'void' ? '<button type="button" class="btn small" data-editlog="' + e.id + '">แก้ไข</button>' : '') +
           (e.type === 'dispense' && !VOIDED.has(e.id) ? '<button type="button" class="btn small" data-void="' + e.id + '">ยกเลิก</button>' : '') +
           '</div></td></tr>').join('') + '</tbody></table>'
-      : '<div class="empty">ไม่พบประวัติในช่วงวันที่เลือก</div>';
+      : '<div class="empty">ไม่พบประวัติในช่วงวันที่และเวลาที่เลือก</div>';
 
     $$('[data-editlog]').forEach(b => b.addEventListener('click', () => editLogModal(b.dataset.editlog)));
     $$('[data-void]').forEach(b => b.addEventListener('click', () => voidModal(b.dataset.void)));
   };
 
-  $('#fStart').addEventListener('change', drawTable);
-  $('#fEnd').addEventListener('change', drawTable);
+  ['fStartD', 'fStartT', 'fEndD', 'fEndT'].forEach(i => $('#' + i).addEventListener('change', drawTable));
   $('#btnResetDate').addEventListener('click', () => {
-    $('#fStart').value = '';
-    $('#fEnd').value = '';
+    $('#fStartD').value = ''; $('#fStartT').value = '';
+    $('#fEndD').value = ''; $('#fEndT').value = '';
     drawTable();
   });
 
   $('#btnPrintDH').addEventListener('click', () => window.print());
   $('#expDH').addEventListener('click', () => {
-    const list = filterLogsByDate(DB.log.filter(e => e.drugId === id), $('#fStart').value, $('#fEnd').value);
+    const list = filterLogsByDateTime(DB.log.filter(e => e.drugId === id), $('#fStartD').value, $('#fStartT').value, $('#fEndD').value, $('#fEndT').value);
     openExport('ประวัติ ' + d.name, 'bah-' + d.house, [{name: 'ประวัติ', headers: LOG_HEAD, rows: logRows(list)}]);
   });
 
