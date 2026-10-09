@@ -185,7 +185,7 @@ label{display:block;font-weight:600;margin-bottom:5px}
 .date-filter{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;background:#F1F5F8;padding:12px 16px;border-radius:8px;border:1px solid var(--line)}
 .date-filter .fgroup{display:flex;align-items:center;gap:6px}
 .date-filter label{margin:0;white-space:nowrap;font-size:14px}
-.date-filter input[type=date],.date-filter input[type=time]{min-height:38px;padding:4px 8px;width:auto}
+.date-filter input[type=date],.date-filter input[type=time],.date-filter input[type=search]{min-height:38px;padding:4px 8px;width:auto}
 
 @media print {
   header.top, #banner, .backlink, .btnrow, .act-btns, .date-filter, .toast, .overlay { display: none !important; }
@@ -1169,7 +1169,8 @@ function renderHistoryIndex(){
   drawHistIdx();
 }
 
-function filterLogsByDateTime(list, startD, startT, endD, endT){
+function filterLogsByDateTime(list, startD, startT, endD, endT, query){
+  const q = norm(query);
   return list.filter(e => {
     const d = new Date(e.ts);
     const dayStr = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
@@ -1182,6 +1183,13 @@ function filterLogsByDateTime(list, startD, startT, endD, endT){
     if (endD){
       if (dayStr > endD) return false;
       if (dayStr === endD && endT && timeStr > endT) return false;
+    }
+    if (q){
+      const queueMatch = norm(e.queue).includes(q);
+      const rxMatch = norm(e.rx).includes(q);
+      const ptMatch = norm(e.patient).includes(q);
+      const noteMatch = norm(e.note).includes(q);
+      if (!queueMatch && !rxMatch && !ptMatch && !noteMatch) return false;
     }
     return true;
   });
@@ -1201,6 +1209,7 @@ function renderDrugHistory(id){
     '<a class="btn" href="#/drugs/' + d.id + '" style="text-decoration:none;display:inline-block">ไปหน้าข้อมูลยา</a>' +
     '</div></div>' +
     '<div class="date-filter">' +
+      '<div class="fgroup"><label for="fQ">ค้นหาคิว/ใบสั่งยา/ผู้ป่วย:</label><input type="search" id="fQ" placeholder="เช่น A101, 6701..."></div>' +
       '<div class="fgroup"><label for="fStartD">ตั้งแต่วันที่:</label><input type="date" id="fStartD"><input type="time" id="fStartT"></div>' +
       '<div class="fgroup"><label for="fEndD">ถึงวันที่:</label><input type="date" id="fEndD"><input type="time" id="fEndT"></div>' +
       '<button type="button" class="btn small" id="btnResetDate">แสดงทั้งหมด</button>' +
@@ -1215,9 +1224,10 @@ function renderDrugHistory(id){
   const drawTable = () => {
     const sD = $('#fStartD').value, sT = $('#fStartT').value;
     const eD = $('#fEndD').value, eT = $('#fEndT').value;
+    const qVal = $('#fQ').value;
     const rawList = DB.log.filter(e => e.drugId === id);
     // หน้าประวัติยา: ให้เรียงจาก เก่า -> ใหม่ (ล่าสุดอยู่ล่างสุด)
-    const list = filterLogsByDateTime(rawList, sD, sT, eD, eT);
+    const list = filterLogsByDateTime(rawList, sD, sT, eD, eT, qVal);
     const showPt = is28(d.house) || list.some(e => e.patient);
     
     $('#dhTableBox').innerHTML = list.length
@@ -1231,14 +1241,16 @@ function renderDrugHistory(id){
           (!VOIDED.has(e.id) && e.type !== 'void' ? '<button type="button" class="btn small" data-editlog="' + e.id + '">แก้ไข</button>' : '') +
           (e.type === 'dispense' && !VOIDED.has(e.id) ? '<button type="button" class="btn small" data-void="' + e.id + '">ยกเลิก</button>' : '') +
           '</div></td></tr>').join('') + '</tbody></table>'
-      : '<div class="empty">ไม่พบประวัติในช่วงวันที่และเวลาที่เลือก</div>';
+      : '<div class="empty">ไม่พบประวัติที่ตรงกับเงื่อนไขการค้นหา</div>';
 
     $$('[data-editlog]').forEach(b => b.addEventListener('click', () => editLogModal(b.dataset.editlog)));
     $$('[data-void]').forEach(b => b.addEventListener('click', () => voidModal(b.dataset.void)));
   };
 
   ['fStartD', 'fStartT', 'fEndD', 'fEndT'].forEach(i => $('#' + i).addEventListener('change', drawTable));
+  $('#fQ').addEventListener('input', drawTable);
   $('#btnResetDate').addEventListener('click', () => {
+    $('#fQ').value = '';
     $('#fStartD').value = ''; $('#fStartT').value = '';
     $('#fEndD').value = ''; $('#fEndT').value = '';
     drawTable();
@@ -1246,7 +1258,7 @@ function renderDrugHistory(id){
 
   $('#btnPrintDH').addEventListener('click', () => window.print());
   $('#expDH').addEventListener('click', () => {
-    const list = filterLogsByDateTime(DB.log.filter(e => e.drugId === id), $('#fStartD').value, $('#fStartT').value, $('#fEndD').value, $('#fEndT').value);
+    const list = filterLogsByDateTime(DB.log.filter(e => e.drugId === id), $('#fStartD').value, $('#fStartT').value, $('#fEndD').value, $('#fEndT').value, $('#fQ').value);
     openExport('ประวัติ ' + d.name, 'bah-' + d.house, [{name: 'ประวัติ', headers: LOG_HEAD, rows: logRows(list)}]);
   });
 
