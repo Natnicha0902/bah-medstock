@@ -526,22 +526,32 @@ async function addLogs(entries){
   }
 }
 async function updateLogEntry(entryId, patch){
+  // 1. อัปเดตข้อมูลใน Local DB (DB.log) ทันที
+  const e = DB.log.find(x => x.id === entryId);
+  if (e){
+    Object.assign(e, patch);
+    finish();
+  }
+
+  // 2. ถ้าเป็นระบบ Cloud ให้ทำการอัปเดตโครงสร้างแคช (logDocs และ ownLog) แล้วส่งขึ้น Firestore
   if (MODE === 'cloud'){
     let targetDocId = null, targetIndex = -1;
     logDocs.forEach((entries, docId) => {
-      const idx = entries.findIndex(e => e.id === entryId);
+      const idx = entries.findIndex(x => x.id === entryId);
       if (idx !== -1){ targetDocId = docId; targetIndex = idx; }
     });
+
     if (targetDocId && targetIndex !== -1){
       const entries = logDocs.get(targetDocId).slice();
       entries[targetIndex] = Object.assign({}, entries[targetIndex], patch);
-      await dbc.doc('log/' + targetDocId).update({entries});
+      
+      // อัปเดตข้อมูลในความจำชั่วคราวเพื่อป้องกันไม่ให้ Snapshot ดึงค่าเก่ามาทับ
       logDocs.set(targetDocId, entries);
-      rebuildLog(); finish();
+      if (ownLog[targetDocId]) ownLog[targetDocId] = entries.slice();
+
+      // บันทึกลง Firestore
+      await dbc.doc('log/' + targetDocId).update({entries});
     }
-  } else {
-    const e = DB.log.find(x => x.id === entryId);
-    if (e){ Object.assign(e, patch); finish(); }
   }
 }
 async function addDrugWithBarcode(fields, qty){
