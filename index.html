@@ -187,15 +187,24 @@ label{display:block;font-weight:600;margin-bottom:5px}
 .date-filter label{margin:0;white-space:nowrap;font-size:14px}
 .date-filter input[type=date],.date-filter input[type=time],.date-filter input[type=search]{min-height:38px;padding:4px 8px;width:auto}
 
+/* CSS สำหรับการพิมพ์หน้าประวัติกระดาษ A4 */
+.print-header-info { display: none; }
 @media print {
-  header.top, #banner, .backlink, .btnrow, .act-btns, .date-filter, .toast, .overlay { display: none !important; }
-  body { background: #fff !important; color: #000 !important; }
+  header.top, #banner, .backlink, .btnrow, .act-btns, .date-filter, .toast, .overlay, .bottom-summary { display: none !important; }
+  body { background: #fff !important; color: #000 !important; font-size: 13px !important; }
   main { padding: 0 !important; max-width: 100% !important; }
   .panel { border: none !important; padding: 0 !important; }
   .scroll { max-height: none !important; border: none !important; overflow: visible !important; }
-  .tbl th { background: #eee !important; color: #000 !important; border-bottom: 2px solid #000 !important; }
-  .tbl td { border-bottom: 1px solid #ccc !important; }
-  .bottom-summary { border: 2px solid #000 !important; background: #fff !important; page-break-inside: avoid; }
+  .print-header-info { display: block !important; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 8px; }
+  .print-header-info h2 { font-size: 18px !important; margin: 0 0 4px 0 !important; }
+  .print-header-info p { margin: 0 !important; font-size: 13px !important; }
+  .summary { display: none !important; }
+  .tbl { width: 100% !important; border-collapse: collapse !important; border: 1px solid #000 !important; }
+  .tbl th, .tbl td { border: 1px solid #000 !important; padding: 6px 8px !important; font-size: 12px !important; color: #000 !important; }
+  .tbl th { background: #f0f0f0 !important; font-weight: bold !important; text-align: center !important; }
+  .tbl td.empty-row { height: 28px; }
+  .tbl td .act-btns, .tbl th:last-child, .tbl td:last-child { display: none !important; } /* ซ่อนคอลัมน์ "จัดการ" */
+  @page { size: A4 portrait; margin: 12mm 10mm 12mm 10mm; }
 }
 
 @media (max-width:980px){
@@ -1086,6 +1095,30 @@ function submitMain(){
     alertBox('สต็อกไม่พอ', d.name + ' คงเหลือ ' + fmt(d.stock) + ' ' + (d.unit || 'เม็ด') + ' แต่ต้องการจ่าย ' + fmt(qty), {tone: 'danger', onOk: () => $('#qty').focus()});
     return;
   }
+
+  // --- ตรวจสอบการทำรายการซ้ำในวันเดียวกัน ---
+  const fullQueue = form.letter + qnum;
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+  const isDuplicate = DB.log.some(e => {
+    return e.type === 'dispense' &&
+           !VOIDED.has(e.id) &&
+           e.drugId === d.id &&
+           norm(e.queue) === norm(fullQueue) &&
+           e.ts >= startOfDay;
+  });
+
+  if (isDuplicate) {
+    confirmBox('แจ้งเตือนรายการซ้ำ', '', {
+      tone: 'warn',
+      okText: 'ทำรายการซ้ำ',
+      html: '<div style="font-size:17px;line-height:1.5">มียา <b>' + esc(d.name) + '</b> สำหรับคิว <b>' + esc(fullQueue) + '</b> ถูกทำรายการไปแล้วในวันนี้<br><br>คุณต้องการทำรายการซ้ำหรือไม่?</div>',
+      onOk: () => confirmDispense(d, qty, staff, qnum, rx, patient)
+    });
+    return;
+  }
+
   confirmDispense(d, qty, staff, qnum, rx, patient);
 }
 function confirmDispense(d, qty, staff, qnum, rx, patient){
@@ -1212,6 +1245,10 @@ function renderDrugHistory(id){
   view.innerHTML =
     '<a class="backlink" href="#/history">กลับไปรายการยา</a>' +
     '<section class="panel">' +
+    '<div class="print-header-info">' +
+      '<h2>ใบบันทึกประวัติการรับ-จ่ายยา: ' + esc(d.name) + '</h2>' +
+      '<p>บ้านเลขที่: <b>' + esc(d.house) + '</b> | หน่วยนับ: <b>' + esc(d.unit || 'เม็ด') + '</b> | คงเหลือสุทธิปัจจุบัน: <b>' + fmt(d.stock) + '</b></p>' +
+    '</div>' +
     '<div class="summary"><div><div class="sub">ประวัติการตัดยอดของ</div><h1 style="margin:0">' + esc(d.name) + '</h1><div class="sub">บ้านเลขที่ ' + esc(d.house) + '</div></div>' +
     '<div class="btnrow" style="margin-left:auto">' +
     '<button type="button" class="btn primary" id="btnPrintDH">พิมพ์ประวัติ (Print)</button>' +
@@ -1240,18 +1277,50 @@ function renderDrugHistory(id){
     const list = filterLogsByDateTime(rawList, sD, sT, eD, eT, qVal);
     const showPt = is28(d.house) || list.some(e => e.patient);
     
-    $('#dhTableBox').innerHTML = list.length
-      ? '<table class="tbl"><thead><tr><th>วันที่</th><th>เวลา</th><th>รายการ</th><th class="num">จำนวน</th><th class="num">คงเหลือหลังรายการ</th><th>คิว / ใบสั่งยา</th>' + (showPt ? '<th>ผู้ใช้ยา</th>' : '') + '<th>ผู้ดำเนินการ</th><th>หมายเหตุ</th><th>จัดการ</th></tr></thead><tbody>' +
-        list.map(e => '<tr class="' + (VOIDED.has(e.id) ? 'voided' : '') + '"><td class="dt">' + fmtDate(e.ts) + '</td><td class="dt">' + fmtTime(e.ts) + '</td><td><span class="tag t-' + e.type + '">' + TYPE_LABEL[e.type] + '</span>' + (VOIDED.has(e.id) ? '<span class="tag t-void">ยกเลิกแล้ว</span>' : '') + '</td>' +
-          '<td class="num ' + (e.delta > 0 ? 'pos' : 'neg') + '">' + (e.delta > 0 ? '+' : '−') + fmt(Math.abs(e.delta)) + '</td><td class="num">' + fmt(e.balance) + '</td>' +
-          '<td>' + (e.queue ? esc(e.queue) + '<div class="sub">' + (e.rx ? esc(e.rx) : '-') + '</div>' : '<span class="sub">-</span>') + '</td>' +
-          (showPt ? '<td>' + (e.patient ? esc(e.patient) : '<span class="sub">-</span>') + '</td>' : '') +
-          '<td>' + (e.staffName ? esc(e.staffName) + '<div class="sub">BHIS ' + esc(e.bhis) + '</div>' : '<span class="sub">-</span>') + '</td><td>' + esc(e.note || '') + '</td>' +
-          '<td><div class="act-btns">' +
-          (!VOIDED.has(e.id) && e.type !== 'void' ? '<button type="button" class="btn small" data-editlog="' + e.id + '">แก้ไข</button>' : '') +
-          (e.type === 'dispense' && !VOIDED.has(e.id) ? '<button type="button" class="btn small" data-void="' + e.id + '">ยกเลิก</button>' : '') +
-          '</div></td></tr>').join('') + '</tbody></table>'
-      : '<div class="empty">ไม่พบประวัติที่ตรงกับเงื่อนไขการค้นหา</div>';
+    let html = '<table class="tbl"><thead><tr>' +
+      '<th>วันที่</th><th>เวลา</th><th>รายการ</th><th class="num">จำนวน</th><th class="num">คงเหลือหลังรายการ</th><th>คิว / ใบสั่งยา</th>' +
+      (showPt ? '<th>ผู้ใช้ยา</th>' : '') +
+      '<th>ผู้ดำเนินการ</th><th>หมายเหตุ</th><th>จัดการ</th></tr></thead><tbody>';
+
+    if (list.length > 0) {
+      html += list.map(e => '<tr class="' + (VOIDED.has(e.id) ? 'voided' : '') + '">' +
+        '<td class="dt">' + fmtDate(e.ts) + '</td>' +
+        '<td class="dt">' + fmtTime(e.ts) + '</td>' +
+        '<td><span class="tag t-' + e.type + '">' + TYPE_LABEL[e.type] + '</span>' + (VOIDED.has(e.id) ? '<span class="tag t-void">ยกเลิกแล้ว</span>' : '') + '</td>' +
+        '<td class="num ' + (e.delta > 0 ? 'pos' : 'neg') + '">' + (e.delta > 0 ? '+' : '−') + fmt(Math.abs(e.delta)) + '</td>' +
+        '<td class="num">' + fmt(e.balance) + '</td>' +
+        '<td>' + (e.queue ? esc(e.queue) + '<div class="sub">' + (e.rx ? esc(e.rx) : '-') + '</div>' : '<span class="sub">-</span>') + '</td>' +
+        (showPt ? '<td>' + (e.patient ? esc(e.patient) : '<span class="sub">-</span>') + '</td>' : '') +
+        '<td>' + (e.staffName ? esc(e.staffName) + '<div class="sub">BHIS ' + esc(e.bhis) + '</div>' : '<span class="sub">-</span>') + '</td>' +
+        '<td>' + esc(e.note || '') + '</td>' +
+        '<td><div class="act-btns">' +
+        (!VOIDED.has(e.id) && e.type !== 'void' ? '<button type="button" class="btn small" data-editlog="' + e.id + '">แก้ไข</button>' : '') +
+        (e.type === 'dispense' && !VOIDED.has(e.id) ? '<button type="button" class="btn small" data-void="' + e.id + '">ยกเลิก</button>' : '') +
+        '</div></td></tr>').join('');
+    }
+
+    // เติมแถวตารางว่างให้ครบอย่างน้อย 25 รายการสำหรับใช้เขียนในกระดาษ พิมพ์ A4
+    const minRows = 25;
+    if (list.length < minRows) {
+      const extraNeeded = minRows - list.length;
+      for (let i = 0; i < extraNeeded; i++) {
+        html += '<tr>' +
+          '<td class="empty-row"></td>' +
+          '<td class="empty-row"></td>' +
+          '<td class="empty-row"></td>' +
+          '<td class="empty-row"></td>' +
+          '<td class="empty-row"></td>' +
+          '<td class="empty-row"></td>' +
+          (showPt ? '<td class="empty-row"></td>' : '') +
+          '<td class="empty-row"></td>' +
+          '<td class="empty-row"></td>' +
+          '<td class="empty-row"></td>' +
+          '</tr>';
+      }
+    }
+
+    html += '</tbody></table>';
+    $('#dhTableBox').innerHTML = html;
 
     $$('[data-editlog]').forEach(b => b.addEventListener('click', () => editLogModal(b.dataset.editlog)));
     $$('[data-void]').forEach(b => b.addEventListener('click', () => voidModal(b.dataset.void)));
