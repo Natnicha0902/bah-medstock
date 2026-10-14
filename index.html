@@ -1350,96 +1350,21 @@ function bahPrintLine(lines){
   return container;
 }
 function bahMakeRealPrintRow(e){
- function bahMakeRealPrintRow(e){
-
   const tr = document.createElement('tr');
   tr.className = 'bah-real';
-
   const canceled = VOIDED.has(e.id);
-  const typ = (TYPE_LABEL[e.type] || e.type || '') + 
-              (canceled ? ' (ยกเลิกแล้ว)' : '');
-
+  const typ = (TYPE_LABEL[e.type] || e.type || '-') + (canceled ? ' (ยกเลิกแล้ว)' : '');
   const delta = Number(e.delta) || 0;
-
-
   const cells = [
-
-    // วันที่
-    [
-      fmtDate(e.ts)
-    ],
-
-
-    // เวลา
-    [
-      fmtTime(e.ts)
-    ],
-
-
-    // คิว / เลขที่ใบสั่งยา
-    [
-      e.queue || '',
-      e.rx ? 'Rx: ' + e.rx : ''
-    ],
-
-
-    // จำนวน
-    [
-      delta > 0 
-        ? '+' + fmt(delta)
-        : delta < 0 
-          ? '-' + fmt(Math.abs(delta))
-          : ''
-    ],
-
-
-    // คงเหลือ
-    [
-      e.balance == null ? '' : fmt(e.balance)
-    ],
-
-
-    // รายการ
-    [
-      typ
-    ],
-
-
-    // หมายเหตุ
-    [
-      e.note || ''
-    ],
-
-
-    // ผู้ดำเนินการ
-    [
-      e.staffName || '',
-      e.bhis ? 'BHIS ' + e.bhis : ''
-    ]
-
+    [fmtDate(e.ts),fmtTime(e.ts)],
+    [typ],
+    [delta > 0 ? fmt(delta) : ''],
+    [delta < 0 ? fmt(Math.abs(delta)) : ''],
+    [e.balance == null ? '' : fmt(e.balance)],
+    [e.queue || '', e.rx ? 'Rx: ' + e.rx : ''],
+    [e.patient ? 'ผู้ใช้ยา: ' + e.patient : '', e.note ? 'หมายเหตุ: ' + e.note : ''],
+    [e.staffName || '', e.bhis ? 'BHIS ' + e.bhis : '']
   ];
-
-
-  cells.forEach((lines,i)=>{
-
-    const td=document.createElement('td');
-
-
-    if(i===0 || i===1 || i===3 || i===4){
-      td.classList.add('bah-center');
-    }
-
-
-    td.appendChild(bahPrintLine(lines));
-
-    tr.appendChild(td);
-
-  });
-
-
-  return tr;
-
-}
   cells.forEach((lines,i) => {
     const td = document.createElement('td');
     if (i === 0 || i === 1) td.classList.add('bah-center');
@@ -1472,28 +1397,17 @@ function bahMakePrintSheet(drug, page, printDate, scope, count){
     '</div></header>' +
     '<div class="bah-pagebody"><table>' +
       '<colgroup>' +
-       <col style="width:10%">  <!-- วันที่ -->
-<col style="width:8%">   <!-- เวลา -->
-<col style="width:18%">  <!-- คิว/ใบสั่งยา -->
-<col style="width:10%">  <!-- จำนวน -->
-<col style="width:10%">  <!-- คงเหลือ -->
-<col style="width:14%">  <!-- รายการ -->
-<col style="width:15%">  <!-- หมายเหตุ -->
-<col style="width:15%">  <!-- ผู้ดำเนินการ -->
+        '<col style="width:13%"><col style="width:12%">' +
+        '<col style="width:8%"><col style="width:8%">' +
+        '<col style="width:10%"><col style="width:15%">' +
+        '<col style="width:20%"><col style="width:14%">' +
       '</colgroup>' +
       '<thead><tr>' +
-        '<thead><tr>' +
-
-'<th>วันที่</th>' +
-'<th>เวลา</th>' +
-'<th>คิว / เลขที่ใบสั่งยา</th>' +
-'<th>จำนวน</th>' +
-'<th>คงเหลือ</th>' +
-'<th>รายการ</th>' +
-'<th>หมายเหตุ</th>' +
-'<th>ผู้ดำเนินการ</th>' +
-
-'</tr></thead>'<tbody></tbody></table></div>' +
+        '<th>วันที่ / เวลา</th><th>ประเภทรายการ</th>' +
+        '<th>รับ (+)</th><th>จ่าย (-)</th><th>คงเหลือ</th>' +
+        '<th>คิว / เลขใบสั่งยา</th><th>ผู้ใช้ยา / หมายเหตุ</th>' +
+        '<th>ผู้ดำเนินการ / BHIS</th>' +
+      '</tr></thead><tbody></tbody></table></div>' +
     '<footer class="bah-footer">' +
       '<span>ข้อมูลที่เขียนด้วยมือยังไม่ถูกหัก/บวกในระบบ โปรดนำเข้าระบบและตรวจยอดภายหลัง</span>' +
       '<span>หน้า ' + page + ' / <span class="bah-total">?</span></span>' +
