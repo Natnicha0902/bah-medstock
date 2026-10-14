@@ -189,6 +189,8 @@ label{display:block;font-weight:600;margin-bottom:5px}
 
 /* CSS สำหรับการพิมพ์หน้าประวัติกระดาษ A4 */
 .print-header-info { display: none; }
+.empty-row-td { height: 32px; border-bottom: 1px solid var(--line-soft); }
+
 @media print {
   header.top, #banner, .backlink, .btnrow, .act-btns, .date-filter, .toast, .overlay, .bottom-summary { display: none !important; }
   body { background: #fff !important; color: #000 !important; font-size: 13px !important; }
@@ -199,13 +201,16 @@ label{display:block;font-weight:600;margin-bottom:5px}
   .print-header-info h2 { font-size: 18px !important; margin: 0 0 4px 0 !important; text-align: center; }
   .print-header-info p { margin: 0 !important; font-size: 13px !important; text-align: center; }
   .summary { display: none !important; }
-  .tbl { width: 100% !important; border-collapse: collapse !important; border: 1px solid #000 !important; }
-  .tbl th, .tbl td { border: 1px solid #000 !important; padding: 5px 6px !important; font-size: 12px !important; color: #000 !important; }
+  
+  .tbl { width: 100% !important; border-collapse: collapse !important; border: 1.5px solid #000 !important; }
+  .tbl th, .tbl td { border: 1px solid #000 !important; padding: 6px 8px !important; font-size: 12px !important; color: #000 !important; }
   .tbl th { background: #f0f0f0 !important; font-weight: bold !important; text-align: center !important; }
-  .tbl td.empty-row { height: 28px; }
+  
+  .empty-row-td { height: 35px !important; } /* ความสูงแถวว่างเวลาพิมพ์ */
   .tbl td .act-btns, .tbl th.col-act, .tbl td.col-act { display: none !important; } /* ซ่อนคอลัมน์ "จัดการ" เวลาพิมพ์ */
   .tbl tr.summary-row td { font-weight: bold !important; background-color: #f9f9f9 !important; border-top: 2px solid #000 !important; border-bottom: 2px solid #000 !important; }
-  @page { size: A4 portrait; margin: 10mm 10mm 10mm 10mm; }
+  
+  @page { size: A4 portrait; margin: 12mm 10mm 12mm 10mm; }
 }
 
 @media (max-width:980px){
@@ -1274,11 +1279,10 @@ function renderDrugHistory(id){
     const eD = $('#fEndD').value, eT = $('#fEndT').value;
     const qVal = $('#fQ').value;
     const rawList = DB.log.filter(e => e.drugId === id);
-    // หน้าประวัติยา: ให้เรียงจาก เก่า -> ใหม่ (ล่าสุดอยู่ล่างสุด)
+    // หน้าประวัติยา: เรียงลำดับจาก เก่า -> ใหม่
     const list = filterLogsByDateTime(rawList, sD, sT, eD, eT, qVal);
     
-    // เรียงคอลัมน์ใหม่ตามความต้องการ:
-    // วันที่ | เวลา | คิว/ใบสั่งยา | จำนวน | คงเหลือหลังรายการ | รายการ/หมายเหตุ | ผู้ดำเนินการ | จัดการ
+    // คอลัมน์ตาราง: วันที่ | เวลา | คิว/ใบสั่งยา | จำนวน | คงเหลือหลังรายการ | รายการ/หมายเหตุ | ผู้ดำเนินการ
     let html = '<table class="tbl"><thead><tr>' +
       '<th>วันที่</th><th>เวลา</th><th>คิว / ใบสั่งยา</th><th class="num">จำนวน</th><th class="num">คงเหลือหลังรายการ</th>' +
       '<th>รายการ / หมายเหตุ</th><th>ผู้ดำเนินการ</th><th class="col-act">จัดการ</th></tr></thead><tbody>';
@@ -1287,8 +1291,8 @@ function renderDrugHistory(id){
     if (list.length > 0) {
       list.forEach(e => {
         const currentDateStr = fmtDate(e.ts);
-        // ถ้าเป็นวันที่เดิมกับบรรทัดก่อนหน้า ให้ซ่อนวันที่ในหน้าพิมพ์เพื่อความสบายตา
-        const displayDate = (currentDateStr === lastDateStr) ? '<span class="sub" style="opacity:0.3">' + currentDateStr + '</span>' : '<b>' + currentDateStr + '</b>';
+        // วันที่เดิมกับบรรทัดก่อนหน้า: แสดงเป็นข้อความจางๆ ให้ดูสะอาดตา
+        const displayDate = (currentDateStr === lastDateStr) ? '<span class="sub" style="opacity:0.25">' + currentDateStr + '</span>' : '<b>' + currentDateStr + '</b>';
         lastDateStr = currentDateStr;
 
         const queueRx = e.queue ? esc(e.queue) + (e.rx ? ' <small class="sub">(' + esc(e.rx) + ')</small>' : '') : '-';
@@ -1315,30 +1319,30 @@ function renderDrugHistory(id){
       });
     }
 
-    // แถวสรุปยอดสุทธิปัจจุบัน 1 บรรทัดก่อนตารางว่าง
+    // แถวสรุปยอดคงเหลือสุทธิปัจจุบัน 1 บรรทัด
     html += '<tr class="summary-row">' +
       '<td colspan="3" style="text-align:right"><b>ยอดคงเหลือสุทธิปัจจุบัน:</b></td>' +
-      '<td colspan="2" class="num" style="font-size:15px;color:var(--brand-dk)"><b>' + fmt(d.stock) + ' ' + esc(d.unit || 'เม็ด') + '</b></td>' +
+      '<td colspan="2" class="num" style="font-size:14px;color:var(--brand-dk)"><b>' + fmt(d.stock) + ' ' + esc(d.unit || 'เม็ด') + '</b></td>' +
       '<td colspan="2" class="sub">' + (hasPack(d) ? breakdownText(d.stock, d) : '') + '</td>' +
       '<td class="col-act"></td>' +
       '</tr>';
 
-    // เติมแถวตารางว่างให้ได้ประมาณ 20 รายการเพื่อพิมพ์ลง 1 หน้า A4 ได้พอดี
-    const targetRows = 20;
-    if (list.length < targetRows) {
-      const extraNeeded = targetRows - list.length;
-      for (let i = 0; i < extraNeeded; i++) {
-        html += '<tr>' +
-          '<td class="empty-row"></td>' +
-          '<td class="empty-row"></td>' +
-          '<td class="empty-row"></td>' +
-          '<td class="empty-row"></td>' +
-          '<td class="empty-row"></td>' +
-          '<td class="empty-row"></td>' +
-          '<td class="empty-row"></td>' +
-          '<td class="empty-row col-act"></td>' +
-          '</tr>';
-      }
+    // สร้างตารางว่างให้ได้รวมทั้งหมดประมาณ 20 รายการสำหรับพิมพ์ 1 หน้า A4
+    const totalTargetRows = 20;
+    const currentRowsCount = list.length;
+    const emptyRowsCount = Math.max(1, totalTargetRows - currentRowsCount);
+
+    for (let i = 0; i < emptyRowsCount; i++) {
+      html += '<tr>' +
+        '<td class="empty-row-td">&nbsp;</td>' +
+        '<td class="empty-row-td">&nbsp;</td>' +
+        '<td class="empty-row-td">&nbsp;</td>' +
+        '<td class="empty-row-td">&nbsp;</td>' +
+        '<td class="empty-row-td">&nbsp;</td>' +
+        '<td class="empty-row-td">&nbsp;</td>' +
+        '<td class="empty-row-td">&nbsp;</td>' +
+        '<td class="empty-row-td col-act">&nbsp;</td>' +
+        '</tr>';
     }
 
     html += '</tbody></table>';
