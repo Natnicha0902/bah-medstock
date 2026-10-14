@@ -195,16 +195,17 @@ label{display:block;font-weight:600;margin-bottom:5px}
   main { padding: 0 !important; max-width: 100% !important; }
   .panel { border: none !important; padding: 0 !important; }
   .scroll { max-height: none !important; border: none !important; overflow: visible !important; }
-  .print-header-info { display: block !important; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 8px; }
-  .print-header-info h2 { font-size: 18px !important; margin: 0 0 4px 0 !important; }
-  .print-header-info p { margin: 0 !important; font-size: 13px !important; }
+  .print-header-info { display: block !important; margin-bottom: 12px; border-bottom: 2px solid #000; padding-bottom: 6px; }
+  .print-header-info h2 { font-size: 18px !important; margin: 0 0 4px 0 !important; text-align: center; }
+  .print-header-info p { margin: 0 !important; font-size: 13px !important; text-align: center; }
   .summary { display: none !important; }
   .tbl { width: 100% !important; border-collapse: collapse !important; border: 1px solid #000 !important; }
-  .tbl th, .tbl td { border: 1px solid #000 !important; padding: 6px 8px !important; font-size: 12px !important; color: #000 !important; }
+  .tbl th, .tbl td { border: 1px solid #000 !important; padding: 5px 6px !important; font-size: 12px !important; color: #000 !important; }
   .tbl th { background: #f0f0f0 !important; font-weight: bold !important; text-align: center !important; }
   .tbl td.empty-row { height: 28px; }
-  .tbl td .act-btns, .tbl th:last-child, .tbl td:last-child { display: none !important; } /* ซ่อนคอลัมน์ "จัดการ" */
-  @page { size: A4 portrait; margin: 12mm 10mm 12mm 10mm; }
+  .tbl td .act-btns, .tbl th.col-act, .tbl td.col-act { display: none !important; } /* ซ่อนคอลัมน์ "จัดการ" เวลาพิมพ์ */
+  .tbl tr.summary-row td { font-weight: bold !important; background-color: #f9f9f9 !important; border-top: 2px solid #000 !important; border-bottom: 2px solid #000 !important; }
+  @page { size: A4 portrait; margin: 10mm 10mm 10mm 10mm; }
 }
 
 @media (max-width:980px){
@@ -1247,7 +1248,7 @@ function renderDrugHistory(id){
     '<section class="panel">' +
     '<div class="print-header-info">' +
       '<h2>ใบบันทึกประวัติการรับ-จ่ายยา: ' + esc(d.name) + '</h2>' +
-      '<p>บ้านเลขที่: <b>' + esc(d.house) + '</b> | หน่วยนับ: <b>' + esc(d.unit || 'เม็ด') + '</b> | คงเหลือสุทธิปัจจุบัน: <b>' + fmt(d.stock) + '</b></p>' +
+      '<p>บ้านเลขที่: <b>' + esc(d.house) + '</b> | หน่วยนับ: <b>' + esc(d.unit || 'เม็ด') + '</b> | ยอดคงเหลือปัจจุบัน: <b>' + fmt(d.stock) + ' ' + esc(d.unit || 'เม็ด') + '</b></p>' +
     '</div>' +
     '<div class="summary"><div><div class="sub">ประวัติการตัดยอดของ</div><h1 style="margin:0">' + esc(d.name) + '</h1><div class="sub">บ้านเลขที่ ' + esc(d.house) + '</div></div>' +
     '<div class="btnrow" style="margin-left:auto">' +
@@ -1275,34 +1276,57 @@ function renderDrugHistory(id){
     const rawList = DB.log.filter(e => e.drugId === id);
     // หน้าประวัติยา: ให้เรียงจาก เก่า -> ใหม่ (ล่าสุดอยู่ล่างสุด)
     const list = filterLogsByDateTime(rawList, sD, sT, eD, eT, qVal);
-    const showPt = is28(d.house) || list.some(e => e.patient);
     
+    // เรียงคอลัมน์ใหม่ตามความต้องการ:
+    // วันที่ | เวลา | คิว/ใบสั่งยา | จำนวน | คงเหลือหลังรายการ | รายการ/หมายเหตุ | ผู้ดำเนินการ | จัดการ
     let html = '<table class="tbl"><thead><tr>' +
-      '<th>วันที่</th><th>เวลา</th><th>รายการ</th><th class="num">จำนวน</th><th class="num">คงเหลือหลังรายการ</th><th>คิว / ใบสั่งยา</th>' +
-      (showPt ? '<th>ผู้ใช้ยา</th>' : '') +
-      '<th>ผู้ดำเนินการ</th><th>หมายเหตุ</th><th>จัดการ</th></tr></thead><tbody>';
+      '<th>วันที่</th><th>เวลา</th><th>คิว / ใบสั่งยา</th><th class="num">จำนวน</th><th class="num">คงเหลือหลังรายการ</th>' +
+      '<th>รายการ / หมายเหตุ</th><th>ผู้ดำเนินการ</th><th class="col-act">จัดการ</th></tr></thead><tbody>';
 
+    let lastDateStr = '';
     if (list.length > 0) {
-      html += list.map(e => '<tr class="' + (VOIDED.has(e.id) ? 'voided' : '') + '">' +
-        '<td class="dt">' + fmtDate(e.ts) + '</td>' +
-        '<td class="dt">' + fmtTime(e.ts) + '</td>' +
-        '<td><span class="tag t-' + e.type + '">' + TYPE_LABEL[e.type] + '</span>' + (VOIDED.has(e.id) ? '<span class="tag t-void">ยกเลิกแล้ว</span>' : '') + '</td>' +
-        '<td class="num ' + (e.delta > 0 ? 'pos' : 'neg') + '">' + (e.delta > 0 ? '+' : '−') + fmt(Math.abs(e.delta)) + '</td>' +
-        '<td class="num">' + fmt(e.balance) + '</td>' +
-        '<td>' + (e.queue ? esc(e.queue) + '<div class="sub">' + (e.rx ? esc(e.rx) : '-') + '</div>' : '<span class="sub">-</span>') + '</td>' +
-        (showPt ? '<td>' + (e.patient ? esc(e.patient) : '<span class="sub">-</span>') + '</td>' : '') +
-        '<td>' + (e.staffName ? esc(e.staffName) + '<div class="sub">BHIS ' + esc(e.bhis) + '</div>' : '<span class="sub">-</span>') + '</td>' +
-        '<td>' + esc(e.note || '') + '</td>' +
-        '<td><div class="act-btns">' +
-        (!VOIDED.has(e.id) && e.type !== 'void' ? '<button type="button" class="btn small" data-editlog="' + e.id + '">แก้ไข</button>' : '') +
-        (e.type === 'dispense' && !VOIDED.has(e.id) ? '<button type="button" class="btn small" data-void="' + e.id + '">ยกเลิก</button>' : '') +
-        '</div></td></tr>').join('');
+      list.forEach(e => {
+        const currentDateStr = fmtDate(e.ts);
+        // ถ้าเป็นวันที่เดิมกับบรรทัดก่อนหน้า ให้ซ่อนวันที่ในหน้าพิมพ์เพื่อความสบายตา
+        const displayDate = (currentDateStr === lastDateStr) ? '<span class="sub" style="opacity:0.3">' + currentDateStr + '</span>' : '<b>' + currentDateStr + '</b>';
+        lastDateStr = currentDateStr;
+
+        const queueRx = e.queue ? esc(e.queue) + (e.rx ? ' <small class="sub">(' + esc(e.rx) + ')</small>' : '') : '-';
+        const sign = e.delta > 0 ? '+' : '−';
+        const cls = e.delta > 0 ? 'pos' : 'neg';
+
+        let detailText = '<span class="tag t-' + e.type + '">' + TYPE_LABEL[e.type] + '</span>';
+        if (VOIDED.has(e.id)) detailText += ' <span class="tag t-void">ยกเลิกแล้ว</span>';
+        if (e.patient) detailText += ' <div class="sub">ผู้ใช้ยา: ' + esc(e.patient) + '</div>';
+        if (e.note) detailText += ' <div class="sub">' + esc(e.note) + '</div>';
+
+        html += '<tr class="' + (VOIDED.has(e.id) ? 'voided' : '') + '">' +
+          '<td class="dt">' + displayDate + '</td>' +
+          '<td class="dt">' + fmtTime(e.ts) + '</td>' +
+          '<td>' + queueRx + '</td>' +
+          '<td class="num ' + cls + '">' + sign + fmt(Math.abs(e.delta)) + '</td>' +
+          '<td class="num"><b>' + fmt(e.balance) + '</b></td>' +
+          '<td>' + detailText + '</td>' +
+          '<td>' + (e.staffName ? esc(e.staffName) : '-') + '</td>' +
+          '<td class="col-act"><div class="act-btns">' +
+          (!VOIDED.has(e.id) && e.type !== 'void' ? '<button type="button" class="btn small" data-editlog="' + e.id + '">แก้ไข</button>' : '') +
+          (e.type === 'dispense' && !VOIDED.has(e.id) ? '<button type="button" class="btn small" data-void="' + e.id + '">ยกเลิก</button>' : '') +
+          '</div></td></tr>';
+      });
     }
 
-    // เติมแถวตารางว่างให้ครบอย่างน้อย 25 รายการสำหรับใช้เขียนในกระดาษ พิมพ์ A4
-    const minRows = 25;
-    if (list.length < minRows) {
-      const extraNeeded = minRows - list.length;
+    // แถวสรุปยอดสุทธิปัจจุบัน 1 บรรทัดก่อนตารางว่าง
+    html += '<tr class="summary-row">' +
+      '<td colspan="3" style="text-align:right"><b>ยอดคงเหลือสุทธิปัจจุบัน:</b></td>' +
+      '<td colspan="2" class="num" style="font-size:15px;color:var(--brand-dk)"><b>' + fmt(d.stock) + ' ' + esc(d.unit || 'เม็ด') + '</b></td>' +
+      '<td colspan="2" class="sub">' + (hasPack(d) ? breakdownText(d.stock, d) : '') + '</td>' +
+      '<td class="col-act"></td>' +
+      '</tr>';
+
+    // เติมแถวตารางว่างให้ได้ประมาณ 20 รายการเพื่อพิมพ์ลง 1 หน้า A4 ได้พอดี
+    const targetRows = 20;
+    if (list.length < targetRows) {
+      const extraNeeded = targetRows - list.length;
       for (let i = 0; i < extraNeeded; i++) {
         html += '<tr>' +
           '<td class="empty-row"></td>' +
@@ -1311,10 +1335,8 @@ function renderDrugHistory(id){
           '<td class="empty-row"></td>' +
           '<td class="empty-row"></td>' +
           '<td class="empty-row"></td>' +
-          (showPt ? '<td class="empty-row"></td>' : '') +
           '<td class="empty-row"></td>' +
-          '<td class="empty-row"></td>' +
-          '<td class="empty-row"></td>' +
+          '<td class="empty-row col-act"></td>' +
           '</tr>';
       }
     }
