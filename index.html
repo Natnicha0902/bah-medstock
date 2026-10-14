@@ -189,30 +189,44 @@ label{display:block;font-weight:600;margin-bottom:5px}
 
 /* CSS สำหรับการพิมพ์หน้าประวัติกระดาษ A4 */
 .print-header-info { display: none; }
-.empty-row-td { height: 32px; border-bottom: 1px solid var(--line-soft); }
+.empty-row-td { height: 35px; border-bottom: 1px solid var(--line-soft); }
 
 @media print {
   header.top, #banner, .backlink, .btnrow, .act-btns, .date-filter, .toast, .overlay, .bottom-summary { 
     display: none !important; 
   }
+  
+  @page { 
+    size: A4 portrait; 
+    margin: 12mm 10mm 12mm 10mm; 
+  }
+  
   html, body { 
     height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
     background: #fff !important; 
     color: #000 !important; 
     font-size: 13px !important; 
   }
+  
   main { 
     padding: 0 !important; 
     max-width: 100% !important; 
     height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
+  
   .panel { 
     border: none !important; 
     padding: 0 !important; 
     height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
+    flex: 1 !important;
   }
+  
   .scroll { 
     max-height: none !important; 
     border: none !important; 
@@ -221,41 +235,97 @@ label{display:block;font-weight:600;margin-bottom:5px}
     display: flex !important;
     flex-direction: column !important;
   }
+  
   .print-header-info { 
     display: block !important; 
-    margin-bottom: 12px; 
+    margin-bottom: 8px; 
     border-bottom: 2px solid #000; 
-    padding-bottom: 6px; 
+    padding-bottom: 4px; 
+    flex: none !important;
   }
   .print-header-info h2 { font-size: 18px !important; margin: 0 0 4px 0 !important; text-align: center; }
   .print-header-info p { margin: 0 !important; font-size: 13px !important; text-align: center; }
   .summary { display: none !important; }
   
-  /* บังคับตารางให้ยืดความสูงเต็มพื้นที่กระดาษ A4 */
+  /* เปลี่ยนแปลงโครงสร้างตาราง HTML เป็น Flexbox สำหรับโหมดการพิมพ์ เพื่อให้ช่องว่างขยายลงล่างสุดเต็ม A4 พอดี */
   .tbl { 
     width: 100% !important; 
     height: 100% !important;
-    border-collapse: collapse !important; 
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
     border: 1.5px solid #000 !important; 
+    border-collapse: collapse !important;
   }
+  
+  .tbl thead {
+    display: flex !important;
+    flex: none !important;
+    border-bottom: 1.5px solid #000 !important;
+    background: #f0f0f0 !important;
+  }
+  
+  .tbl tbody {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    height: 100% !important;
+  }
+  
+  .tbl tr {
+    display: flex !important;
+    width: 100% !important;
+    flex: none !important;
+  }
+  
+  .tbl tr.empty-row-td-wrap {
+    min-height: 35px !important;
+  }
+  
   .tbl th, .tbl td { 
-    border: 1px solid #000 !important; 
-    padding: 6px 8px !important; 
+    border-right: 1px solid #000 !important; 
+    border-bottom: 1px solid #000 !important; 
+    padding: 5px 6px !important; 
     font-size: 12px !important; 
     color: #000 !important; 
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
   }
-  .tbl th { background: #f0f0f0 !important; font-weight: bold !important; text-align: center !important; }
   
-  /* ดันแถวสุดท้ายของตารางช่องว่างให้ยืดออกจนสุดขอบล่าง */
-  .tbl tbody tr.empty-row-last td { 
-    height: 100% !important; 
-    vertical-align: top !important; 
+  .tbl th:last-child, .tbl td:last-child {
+    border-right: none !important;
   }
+  
+  /* กำหนดความกว้างแต่ละคอลัมน์เวลาพิมพ์ */
+  .tbl th:nth-child(1), .tbl td:nth-child(1) { width: 14% !important; } /* วันที่ */
+  .tbl th:nth-child(2), .tbl td:nth-child(2) { width: 11% !important; } /* เวลา */
+  .tbl th:nth-child(3), .tbl td:nth-child(3) { width: 18% !important; } /* คิว/ใบสั่งยา */
+  .tbl th:nth-child(4), .tbl td:nth-child(4) { width: 10% !important; justify-content: flex-end !important; } /* จำนวน */
+  .tbl th:nth-child(5), .tbl td:nth-child(5) { width: 15% !important; justify-content: flex-end !important; } /* คงเหลือ */
+  .tbl th:nth-child(6), .tbl td:nth-child(6) { width: 18% !important; } /* รายการ/หมายเหตุ */
+  .tbl th:nth-child(7), .tbl td:nth-child(7) { width: 14% !important; } /* ผู้ดำเนินการ */
+  
+  .tbl th { font-weight: bold !important; justify-content: center !important; text-align: center !important; }
   
   .tbl td .act-btns, .tbl th.col-act, .tbl td.col-act { display: none !important; }
-  .tbl tr.summary-row td { font-weight: bold !important; background-color: #f9f9f9 !important; border-top: 2px solid #000 !important; border-bottom: 2px solid #000 !important; }
   
-  @page { size: A4 portrait; margin: 12mm 10mm 12mm 10mm; }
+  .tbl tr.summary-row {
+    background-color: #f9f9f9 !important;
+    border-top: 1.5px solid #000 !important;
+    border-bottom: 1.5px solid #000 !important;
+    font-weight: bold !important;
+  }
+  
+  /* ให้แถวว่างสุดท้ายขยายพื้นที่ (flex: 1) ยืดลงไปดันจนสุดขอบล่างของกระดาษ A4 */
+  .tbl tr.empty-fill-last {
+    flex: 1 !important;
+    height: 100% !important;
+  }
+  .tbl tr.empty-fill-last td {
+    height: 100% !important;
+    align-items: flex-start !important;
+  }
 }
 
 @media (max-width:980px){
@@ -1363,14 +1433,16 @@ function renderDrugHistory(id){
       '<td class="col-act"></td>' +
       '</tr>';
 
-    // เติมแถวว่าง 18 แถว โดยใส่ class 'empty-row-last' ในแถวสุดท้ายเพื่อให้ CSS Flexbox ดันความสูงลงไปสุดหน้า A4
-    const totalTargetRows = 18;
+    // สร้างตารางว่างสำหรับการเขียนต่อ โดยกำหนดแถวสุดท้ายให้มี class empty-fill-last เพื่อดันขอบล่างสุดกระดาษ A4
+    const totalTargetRows = 16;
     const currentRowsCount = list.length;
     const emptyRowsCount = Math.max(1, totalTargetRows - currentRowsCount);
 
     for (let i = 0; i < emptyRowsCount; i++) {
-      const isLast = (i === emptyRowsCount - 1) ? ' class="empty-row-last"' : '';
-      html += '<tr' + isLast + '>' +
+      const isLastRow = (i === emptyRowsCount - 1);
+      const rowClass = isLastRow ? 'class="empty-row-td-wrap empty-fill-last"' : 'class="empty-row-td-wrap"';
+      
+      html += '<tr ' + rowClass + '>' +
         '<td class="empty-row-td">&nbsp;</td>' +
         '<td class="empty-row-td">&nbsp;</td>' +
         '<td class="empty-row-td">&nbsp;</td>' +
