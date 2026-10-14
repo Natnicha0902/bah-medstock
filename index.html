@@ -187,145 +187,15 @@ label{display:block;font-weight:600;margin-bottom:5px}
 .date-filter label{margin:0;white-space:nowrap;font-size:14px}
 .date-filter input[type=date],.date-filter input[type=time],.date-filter input[type=search]{min-height:38px;padding:4px 8px;width:auto}
 
-/* CSS สำหรับการพิมพ์หน้าประวัติกระดาษ A4 */
-.print-header-info { display: none; }
-.empty-row-td { height: 35px; border-bottom: 1px solid var(--line-soft); }
-
 @media print {
-  header.top, #banner, .backlink, .btnrow, .act-btns, .date-filter, .toast, .overlay, .bottom-summary { 
-    display: none !important; 
-  }
-  
-  @page { 
-    size: A4 portrait; 
-    margin: 12mm 10mm 12mm 10mm; 
-  }
-  
-  html, body { 
-    height: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: #fff !important; 
-    color: #000 !important; 
-    font-size: 13px !important; 
-  }
-  
-  main { 
-    padding: 0 !important; 
-    max-width: 100% !important; 
-    height: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-  }
-  
-  .panel { 
-    border: none !important; 
-    padding: 0 !important; 
-    height: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-    flex: 1 !important;
-  }
-  
-  .scroll { 
-    max-height: none !important; 
-    border: none !important; 
-    overflow: visible !important; 
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-  }
-  
-  .print-header-info { 
-    display: block !important; 
-    margin-bottom: 8px; 
-    border-bottom: 2px solid #000; 
-    padding-bottom: 4px; 
-    flex: none !important;
-  }
-  .print-header-info h2 { font-size: 18px !important; margin: 0 0 4px 0 !important; text-align: center; }
-  .print-header-info p { margin: 0 !important; font-size: 13px !important; text-align: center; }
-  .summary { display: none !important; }
-  
-  /* เปลี่ยนแปลงโครงสร้างตาราง HTML เป็น Flexbox สำหรับโหมดการพิมพ์ เพื่อให้ช่องว่างขยายลงล่างสุดเต็ม A4 พอดี */
-  .tbl { 
-    width: 100% !important; 
-    height: 100% !important;
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    border: 1.5px solid #000 !important; 
-    border-collapse: collapse !important;
-  }
-  
-  .tbl thead {
-    display: flex !important;
-    flex: none !important;
-    border-bottom: 1.5px solid #000 !important;
-    background: #f0f0f0 !important;
-  }
-  
-  .tbl tbody {
-    display: flex !important;
-    flex-direction: column !important;
-    flex: 1 !important;
-    height: 100% !important;
-  }
-  
-  .tbl tr {
-    display: flex !important;
-    width: 100% !important;
-    flex: none !important;
-  }
-  
-  .tbl tr.empty-row-td-wrap {
-    min-height: 35px !important;
-  }
-  
-  .tbl th, .tbl td { 
-    border-right: 1px solid #000 !important; 
-    border-bottom: 1px solid #000 !important; 
-    padding: 5px 6px !important; 
-    font-size: 12px !important; 
-    color: #000 !important; 
-    box-sizing: border-box !important;
-    display: flex !important;
-    align-items: center !important;
-  }
-  
-  .tbl th:last-child, .tbl td:last-child {
-    border-right: none !important;
-  }
-  
-  /* กำหนดความกว้างแต่ละคอลัมน์เวลาพิมพ์ */
-  .tbl th:nth-child(1), .tbl td:nth-child(1) { width: 14% !important; } /* วันที่ */
-  .tbl th:nth-child(2), .tbl td:nth-child(2) { width: 11% !important; } /* เวลา */
-  .tbl th:nth-child(3), .tbl td:nth-child(3) { width: 18% !important; } /* คิว/ใบสั่งยา */
-  .tbl th:nth-child(4), .tbl td:nth-child(4) { width: 10% !important; justify-content: flex-end !important; } /* จำนวน */
-  .tbl th:nth-child(5), .tbl td:nth-child(5) { width: 15% !important; justify-content: flex-end !important; } /* คงเหลือ */
-  .tbl th:nth-child(6), .tbl td:nth-child(6) { width: 18% !important; } /* รายการ/หมายเหตุ */
-  .tbl th:nth-child(7), .tbl td:nth-child(7) { width: 14% !important; } /* ผู้ดำเนินการ */
-  
-  .tbl th { font-weight: bold !important; justify-content: center !important; text-align: center !important; }
-  
-  .tbl td .act-btns, .tbl th.col-act, .tbl td.col-act { display: none !important; }
-  
-  .tbl tr.summary-row {
-    background-color: #f9f9f9 !important;
-    border-top: 1.5px solid #000 !important;
-    border-bottom: 1.5px solid #000 !important;
-    font-weight: bold !important;
-  }
-  
-  /* ให้แถวว่างสุดท้ายขยายพื้นที่ (flex: 1) ยืดลงไปดันจนสุดขอบล่างของกระดาษ A4 */
-  .tbl tr.empty-fill-last {
-    flex: 1 !important;
-    height: 100% !important;
-  }
-  .tbl tr.empty-fill-last td {
-    height: 100% !important;
-    align-items: flex-start !important;
-  }
+  header.top, #banner, .backlink, .btnrow, .act-btns, .date-filter, .toast, .overlay { display: none !important; }
+  body { background: #fff !important; color: #000 !important; }
+  main { padding: 0 !important; max-width: 100% !important; }
+  .panel { border: none !important; padding: 0 !important; }
+  .scroll { max-height: none !important; border: none !important; overflow: visible !important; }
+  .tbl th { background: #eee !important; color: #000 !important; border-bottom: 2px solid #000 !important; }
+  .tbl td { border-bottom: 1px solid #ccc !important; }
+  .bottom-summary { border: 2px solid #000 !important; background: #fff !important; page-break-inside: avoid; }
 }
 
 @media (max-width:980px){
@@ -340,6 +210,73 @@ label{display:block;font-weight:600;margin-bottom:5px}
   .top{padding-left:12px;padding-right:12px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* BAH MED STOCK / PRINTABLE DRUG LEDGER / A4 PORTRAIT */
+#bahPrintRoot, #bahPrintRoot * { box-sizing:border-box; }
+#bahPrintRoot {
+  position:absolute; left:-100000px; top:0; width:190mm;
+  display:block; visibility:hidden; background:#fff; color:#151515;
+  font-family:"Sarabun","Noto Sans Thai","Leelawadee UI",Tahoma,sans-serif;
+  font-size:9.5px; line-height:1.3;
+}
+#bahPrintRoot .bah-sheet {
+  display:flex; flex-direction:column; width:190mm;
+  height:276mm; margin:0; padding:0; background:#fff;
+  overflow:hidden; break-after:page; page-break-after:always;
+}
+#bahPrintRoot .bah-sheet:last-child { break-after:auto; page-break-after:auto; }
+#bahPrintRoot .bah-head { flex:0 0 auto; padding:0 0 2.3mm; min-height:23mm; }
+#bahPrintRoot .bah-head h2 {
+  font-size:15px; font-weight:700; text-align:center;
+  margin:0 0 2mm; line-height:1.35; overflow-wrap:anywhere;
+}
+#bahPrintRoot .bah-meta {
+  display:flex; flex-wrap:wrap; align-items:baseline;
+  justify-content:space-between; gap:0.5mm 3mm;
+  font-size:9.5px; margin-top:1mm;
+}
+#bahPrintRoot .bah-meta b { font-weight:700; }
+#bahPrintRoot .bah-pagebody { flex:1 1 auto; min-height:0; overflow:hidden; }
+#bahPrintRoot table {
+  width:100%; border-collapse:collapse; table-layout:fixed;
+  font-size:9.5px; line-height:1.25; margin:0; color:#151515;
+}
+#bahPrintRoot thead { display:table-header-group; }
+#bahPrintRoot th, #bahPrintRoot td {
+  border:0.22mm solid #454545; padding:1mm 0.65mm;
+  vertical-align:middle; background:#fff; color:#151515;
+  overflow-wrap:anywhere; white-space:normal;
+}
+#bahPrintRoot th { height:11mm; text-align:center; font-weight:700; }
+#bahPrintRoot tr { break-inside:avoid; page-break-inside:avoid; }
+#bahPrintRoot tr.bah-real td { height:9.4mm; }
+#bahPrintRoot tr.bah-empty td { height:9.4mm; padding:0; }
+#bahPrintRoot .bah-center { text-align:center; }
+#bahPrintRoot .bah-right { text-align:right; }
+#bahPrintRoot .bah-line { display:block; }
+#bahPrintRoot .bah-small { font-size:8.4px; color:#444; }
+#bahPrintRoot .bah-void { text-decoration:line-through; color:#777; }
+#bahPrintRoot .bah-footer {
+  flex:0 0 8mm; border-top:0.2mm solid #999;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:4mm; font-size:9px; color:#303030;
+}
+@page { size:A4 portrait; margin:10mm; }
+@media print {
+  body.bah-print-active { background:#fff !important; padding:0 !important; margin:0 !important; }
+  body.bah-print-active > header.top,
+  body.bah-print-active > #banner,
+  body.bah-print-active > main#view,
+  body.bah-print-active > #modal-root,
+  body.bah-print-active > #toast-root { display:none !important; }
+  body.bah-print-active > #bahPrintRoot {
+    position:static !important; left:auto !important; top:auto !important;
+    visibility:visible !important; display:block !important;
+    width:190mm !important; margin:0 !important; padding:0 !important;
+  }
+  #bahPrintRoot .bah-sheet { break-inside:avoid; page-break-inside:avoid; }
+}
+
 </style>
 </head>
 <body class="locked">
@@ -656,28 +593,22 @@ async function addLogs(entries){
   }
 }
 async function updateLogEntry(entryId, patch){
-  const e = DB.log.find(x => x.id === entryId);
-  if (e){
-    Object.assign(e, patch);
-    finish();
-  }
-
   if (MODE === 'cloud'){
     let targetDocId = null, targetIndex = -1;
     logDocs.forEach((entries, docId) => {
-      const idx = entries.findIndex(x => x.id === entryId);
+      const idx = entries.findIndex(e => e.id === entryId);
       if (idx !== -1){ targetDocId = docId; targetIndex = idx; }
     });
-
     if (targetDocId && targetIndex !== -1){
       const entries = logDocs.get(targetDocId).slice();
       entries[targetIndex] = Object.assign({}, entries[targetIndex], patch);
-      
-      logDocs.set(targetDocId, entries);
-      if (ownLog[targetDocId]) ownLog[targetDocId] = entries.slice();
-
       await dbc.doc('log/' + targetDocId).update({entries});
+      logDocs.set(targetDocId, entries);
+      rebuildLog(); finish();
     }
+  } else {
+    const e = DB.log.find(x => x.id === entryId);
+    if (e){ Object.assign(e, patch); finish(); }
   }
 }
 async function addDrugWithBarcode(fields, qty){
@@ -1052,6 +983,7 @@ function logRow3(e){
 function renderHistoryPanel(){
   const body = $('#hp-body');
   if (!body) return;
+  // หน้าหลัก: รายการล่าสุดอยู่ด้านบนสุด
   const rows = DB.log.slice(-100).reverse();
   body.innerHTML = rows.length
     ? '<table class="tbl"><thead><tr><th>วันที่ / เวลา</th><th>ชื่อยา</th><th class="num">จำนวน</th></tr></thead><tbody>' + rows.map(logRow3).join('') + '</tbody></table>'
@@ -1211,29 +1143,6 @@ function submitMain(){
     alertBox('สต็อกไม่พอ', d.name + ' คงเหลือ ' + fmt(d.stock) + ' ' + (d.unit || 'เม็ด') + ' แต่ต้องการจ่าย ' + fmt(qty), {tone: 'danger', onOk: () => $('#qty').focus()});
     return;
   }
-
-  const fullQueue = form.letter + qnum;
-  const now = new Date();
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-
-  const isDuplicate = DB.log.some(e => {
-    return e.type === 'dispense' &&
-           !VOIDED.has(e.id) &&
-           e.drugId === d.id &&
-           norm(e.queue) === norm(fullQueue) &&
-           e.ts >= startOfDay;
-  });
-
-  if (isDuplicate) {
-    confirmBox('แจ้งเตือนรายการซ้ำ', '', {
-      tone: 'warn',
-      okText: 'ทำรายการซ้ำ',
-      html: '<div style="font-size:17px;line-height:1.5">มียา <b>' + esc(d.name) + '</b> สำหรับคิว <b>' + esc(fullQueue) + '</b> ถูกทำรายการไปแล้วในวันนี้<br><br>คุณต้องการทำรายการซ้ำหรือไม่?</div>',
-      onOk: () => confirmDispense(d, qty, staff, qnum, rx, patient)
-    });
-    return;
-  }
-
   confirmDispense(d, qty, staff, qnum, rx, patient);
 }
 function confirmDispense(d, qty, staff, qnum, rx, patient){
@@ -1360,10 +1269,6 @@ function renderDrugHistory(id){
   view.innerHTML =
     '<a class="backlink" href="#/history">กลับไปรายการยา</a>' +
     '<section class="panel">' +
-    '<div class="print-header-info">' +
-      '<h2>ใบบันทึกประวัติการรับ-จ่ายยา: ' + esc(d.name) + '</h2>' +
-      '<p>บ้านเลขที่: <b>' + esc(d.house) + '</b> | หน่วยนับ: <b>' + esc(d.unit || 'เม็ด') + '</b> | ยอดคงเหลือปัจจุบัน: <b>' + fmt(d.stock) + ' ' + esc(d.unit || 'เม็ด') + '</b></p>' +
-    '</div>' +
     '<div class="summary"><div><div class="sub">ประวัติการตัดยอดของ</div><h1 style="margin:0">' + esc(d.name) + '</h1><div class="sub">บ้านเลขที่ ' + esc(d.house) + '</div></div>' +
     '<div class="btnrow" style="margin-left:auto">' +
     '<button type="button" class="btn primary" id="btnPrintDH">พิมพ์ประวัติ (Print)</button>' +
@@ -1388,74 +1293,22 @@ function renderDrugHistory(id){
     const eD = $('#fEndD').value, eT = $('#fEndT').value;
     const qVal = $('#fQ').value;
     const rawList = DB.log.filter(e => e.drugId === id);
+    // หน้าประวัติยา: ให้เรียงจาก เก่า -> ใหม่ (ล่าสุดอยู่ล่างสุด)
     const list = filterLogsByDateTime(rawList, sD, sT, eD, eT, qVal);
+    const showPt = is28(d.house) || list.some(e => e.patient);
     
-    let html = '<table class="tbl"><thead><tr>' +
-      '<th>วันที่</th><th>เวลา</th><th>คิว / ใบสั่งยา</th><th class="num">จำนวน</th><th class="num">คงเหลือหลังรายการ</th>' +
-      '<th>รายการ / หมายเหตุ</th><th>ผู้ดำเนินการ</th><th class="col-act">จัดการ</th></tr></thead><tbody>';
-
-    let lastDateStr = '';
-    if (list.length > 0) {
-      list.forEach(e => {
-        const currentDateStr = fmtDate(e.ts);
-        const displayDate = (currentDateStr === lastDateStr) ? '<span class="sub" style="opacity:0.25">' + currentDateStr + '</span>' : '<b>' + currentDateStr + '</b>';
-        lastDateStr = currentDateStr;
-
-        const queueRx = e.queue ? esc(e.queue) + (e.rx ? ' <small class="sub">(' + esc(e.rx) + ')</small>' : '') : '-';
-        const sign = e.delta > 0 ? '+' : '−';
-        const cls = e.delta > 0 ? 'pos' : 'neg';
-
-        let detailText = '<span class="tag t-' + e.type + '">' + TYPE_LABEL[e.type] + '</span>';
-        if (VOIDED.has(e.id)) detailText += ' <span class="tag t-void">ยกเลิกแล้ว</span>';
-        if (e.patient) detailText += ' <div class="sub">ผู้ใช้ยา: ' + esc(e.patient) + '</div>';
-        if (e.note) detailText += ' <div class="sub">' + esc(e.note) + '</div>';
-
-        html += '<tr class="' + (VOIDED.has(e.id) ? 'voided' : '') + '">' +
-          '<td class="dt">' + displayDate + '</td>' +
-          '<td class="dt">' + fmtTime(e.ts) + '</td>' +
-          '<td>' + queueRx + '</td>' +
-          '<td class="num ' + cls + '">' + sign + fmt(Math.abs(e.delta)) + '</td>' +
-          '<td class="num"><b>' + fmt(e.balance) + '</b></td>' +
-          '<td>' + detailText + '</td>' +
-          '<td>' + (e.staffName ? esc(e.staffName) : '-') + '</td>' +
-          '<td class="col-act"><div class="act-btns">' +
+    $('#dhTableBox').innerHTML = list.length
+      ? '<table class="tbl"><thead><tr><th>วันที่</th><th>เวลา</th><th>รายการ</th><th class="num">จำนวน</th><th class="num">คงเหลือหลังรายการ</th><th>คิว / ใบสั่งยา</th>' + (showPt ? '<th>ผู้ใช้ยา</th>' : '') + '<th>ผู้ดำเนินการ</th><th>หมายเหตุ</th><th>จัดการ</th></tr></thead><tbody>' +
+        list.map(e => '<tr class="' + (VOIDED.has(e.id) ? 'voided' : '') + '"><td class="dt">' + fmtDate(e.ts) + '</td><td class="dt">' + fmtTime(e.ts) + '</td><td><span class="tag t-' + e.type + '">' + TYPE_LABEL[e.type] + '</span>' + (VOIDED.has(e.id) ? '<span class="tag t-void">ยกเลิกแล้ว</span>' : '') + '</td>' +
+          '<td class="num ' + (e.delta > 0 ? 'pos' : 'neg') + '">' + (e.delta > 0 ? '+' : '−') + fmt(Math.abs(e.delta)) + '</td><td class="num">' + fmt(e.balance) + '</td>' +
+          '<td>' + (e.queue ? esc(e.queue) + '<div class="sub">' + (e.rx ? esc(e.rx) : '-') + '</div>' : '<span class="sub">-</span>') + '</td>' +
+          (showPt ? '<td>' + (e.patient ? esc(e.patient) : '<span class="sub">-</span>') + '</td>' : '') +
+          '<td>' + (e.staffName ? esc(e.staffName) + '<div class="sub">BHIS ' + esc(e.bhis) + '</div>' : '<span class="sub">-</span>') + '</td><td>' + esc(e.note || '') + '</td>' +
+          '<td><div class="act-btns">' +
           (!VOIDED.has(e.id) && e.type !== 'void' ? '<button type="button" class="btn small" data-editlog="' + e.id + '">แก้ไข</button>' : '') +
           (e.type === 'dispense' && !VOIDED.has(e.id) ? '<button type="button" class="btn small" data-void="' + e.id + '">ยกเลิก</button>' : '') +
-          '</div></td></tr>';
-      });
-    }
-
-    // แถวสรุปยอดคงเหลือสุทธิปัจจุบัน
-    html += '<tr class="summary-row">' +
-      '<td colspan="3" style="text-align:right"><b>ยอดคงเหลือสุทธิปัจจุบัน:</b></td>' +
-      '<td colspan="2" class="num" style="font-size:14px;color:var(--brand-dk)"><b>' + fmt(d.stock) + ' ' + esc(d.unit || 'เม็ด') + '</b></td>' +
-      '<td colspan="2" class="sub">' + (hasPack(d) ? breakdownText(d.stock, d) : '') + '</td>' +
-      '<td class="col-act"></td>' +
-      '</tr>';
-
-    // สร้างตารางว่างสำหรับการเขียนต่อ โดยกำหนดแถวสุดท้ายให้มี class empty-fill-last เพื่อดันขอบล่างสุดกระดาษ A4
-    const totalTargetRows = 16;
-    const currentRowsCount = list.length;
-    const emptyRowsCount = Math.max(1, totalTargetRows - currentRowsCount);
-
-    for (let i = 0; i < emptyRowsCount; i++) {
-      const isLastRow = (i === emptyRowsCount - 1);
-      const rowClass = isLastRow ? 'class="empty-row-td-wrap empty-fill-last"' : 'class="empty-row-td-wrap"';
-      
-      html += '<tr ' + rowClass + '>' +
-        '<td class="empty-row-td">&nbsp;</td>' +
-        '<td class="empty-row-td">&nbsp;</td>' +
-        '<td class="empty-row-td">&nbsp;</td>' +
-        '<td class="empty-row-td">&nbsp;</td>' +
-        '<td class="empty-row-td">&nbsp;</td>' +
-        '<td class="empty-row-td">&nbsp;</td>' +
-        '<td class="empty-row-td">&nbsp;</td>' +
-        '<td class="empty-row-td col-act">&nbsp;</td>' +
-        '</tr>';
-    }
-
-    html += '</tbody></table>';
-    $('#dhTableBox').innerHTML = html;
+          '</div></td></tr>').join('') + '</tbody></table>'
+      : '<div class="empty">ไม่พบประวัติที่ตรงกับเงื่อนไขการค้นหา</div>';
 
     $$('[data-editlog]').forEach(b => b.addEventListener('click', () => editLogModal(b.dataset.editlog)));
     $$('[data-void]').forEach(b => b.addEventListener('click', () => voidModal(b.dataset.void)));
@@ -1470,7 +1323,7 @@ function renderDrugHistory(id){
     drawTable();
   });
 
-  $('#btnPrintDH').addEventListener('click', () => window.print());
+  $('#btnPrintDH').addEventListener('click', () => bahPrintDrugHistory(id));
   $('#expDH').addEventListener('click', () => {
     const list = filterLogsByDateTime(DB.log.filter(e => e.drugId === id), $('#fStartD').value, $('#fStartT').value, $('#fEndD').value, $('#fEndT').value, $('#fQ').value);
     openExport('ประวัติ ' + d.name, 'bah-' + d.house, [{name: 'ประวัติ', headers: LOG_HEAD, rows: logRows(list)}]);
@@ -1478,6 +1331,174 @@ function renderDrugHistory(id){
 
   drawTable();
 }
+
+/* BAH MED STOCK / A4 HISTORY PRINT WITH EMPTY HANDWRITING ROWS */
+let bahPrintRoot = null;
+function bahClearHistoryPrint(){
+  document.body.classList.remove('bah-print-active');
+  if (bahPrintRoot) bahPrintRoot.remove();
+  bahPrintRoot = null;
+}
+function bahPrintLine(lines){
+  const container = document.createElement('span');
+  lines.filter(x => x != null && x !== '').forEach((line, index) => {
+    const span = document.createElement('span');
+    span.className = 'bah-line' + (index ? ' bah-small' : '');
+    span.textContent = String(line);
+    container.appendChild(span);
+  });
+  return container;
+}
+function bahMakeRealPrintRow(e){
+  const tr = document.createElement('tr');
+  tr.className = 'bah-real';
+  const canceled = VOIDED.has(e.id);
+  const typ = (TYPE_LABEL[e.type] || e.type || '-') + (canceled ? ' (ยกเลิกแล้ว)' : '');
+  const delta = Number(e.delta) || 0;
+  const cells = [
+    [fmtDate(e.ts),fmtTime(e.ts)],
+    [typ],
+    [delta > 0 ? fmt(delta) : ''],
+    [delta < 0 ? fmt(Math.abs(delta)) : ''],
+    [e.balance == null ? '' : fmt(e.balance)],
+    [e.queue || '', e.rx ? 'Rx: ' + e.rx : ''],
+    [e.patient ? 'ผู้ใช้ยา: ' + e.patient : '', e.note ? 'หมายเหตุ: ' + e.note : ''],
+    [e.staffName || '', e.bhis ? 'BHIS ' + e.bhis : '']
+  ];
+  cells.forEach((lines,i) => {
+    const td = document.createElement('td');
+    if (i === 0 || i === 1) td.classList.add('bah-center');
+    if (i >= 2 && i <= 4) td.classList.add('bah-right');
+    td.appendChild(bahPrintLine(lines));
+    tr.appendChild(td);
+  });
+  return tr;
+}
+function bahBlankPrintRow(){
+  const tr = document.createElement('tr');
+  tr.className = 'bah-empty';
+  for (let i=0;i<8;i++) tr.appendChild(document.createElement('td'));
+  return tr;
+}
+function bahMakePrintSheet(drug, page, printDate, scope, count){
+  const sheet = document.createElement('section');
+  sheet.className = 'bah-sheet';
+  sheet.innerHTML =
+    '<header class="bah-head">' +
+    '<h2>ใบบันทึกประวัติการรับ-จ่ายยา: ' + esc(drug.name) + '</h2>' +
+    '<div class="bah-meta">' +
+      '<span>บ้านเลขที่: <b>' + esc(drug.house) + '</b></span>' +
+      '<span>หน่วย: <b>' + esc(drug.unit || 'เม็ด') + '</b></span>' +
+      '<span>คงเหลือในระบบขณะพิมพ์: <b>' + fmt(drug.stock) + '</b></span>' +
+    '</div>' +
+    '<div class="bah-meta">' +
+      '<span>' + esc(scope) + ' (' + count + ' รายการ)</span>' +
+      '<span>พิมพ์เมื่อ: ' + esc(printDate) + '</span>' +
+    '</div></header>' +
+    '<div class="bah-pagebody"><table>' +
+      '<colgroup>' +
+        '<col style="width:13%"><col style="width:12%">' +
+        '<col style="width:8%"><col style="width:8%">' +
+        '<col style="width:10%"><col style="width:15%">' +
+        '<col style="width:20%"><col style="width:14%">' +
+      '</colgroup>' +
+      '<thead><tr>' +
+        '<th>วันที่ / เวลา</th><th>ประเภทรายการ</th>' +
+        '<th>รับ (+)</th><th>จ่าย (-)</th><th>คงเหลือ</th>' +
+        '<th>คิว / เลขใบสั่งยา</th><th>ผู้ใช้ยา / หมายเหตุ</th>' +
+        '<th>ผู้ดำเนินการ / BHIS</th>' +
+      '</tr></thead><tbody></tbody></table></div>' +
+    '<footer class="bah-footer">' +
+      '<span>ข้อมูลที่เขียนด้วยมือยังไม่ถูกหัก/บวกในระบบ โปรดนำเข้าระบบและตรวจยอดภายหลัง</span>' +
+      '<span>หน้า ' + page + ' / <span class="bah-total">?</span></span>' +
+    '</footer>';
+  bahPrintRoot.appendChild(sheet);
+  return sheet;
+}
+function bahPrintHasSpace(sheet){
+  const body = sheet.querySelector('.bah-pagebody').getBoundingClientRect();
+  const table = sheet.querySelector('table').getBoundingClientRect();
+  return table.bottom <= body.bottom - 2.5; // pixel safety for print/PDF engines
+}
+function bahFillBlankCells(sheet){
+  const tbody = sheet.querySelector('tbody');
+  const added = [];
+  for (let i=0;i<60;i++) {
+    const row=bahBlankPrintRow();
+    tbody.appendChild(row);
+    if (!bahPrintHasSpace(sheet)) { row.remove(); break; }
+    added.push(row);
+  }
+  if (added.length) {
+    // Distribute the remaining height evenly, NOT one unusually tall last row.
+    // Reserve ~3px so browsers do not unexpectedly create an extra print page.
+    const area=sheet.querySelector('.bah-pagebody').getBoundingClientRect();
+    const table=sheet.querySelector('table').getBoundingClientRect();
+    const spare=Math.max(0,area.bottom-table.bottom-3.5);
+    if (spare > 0.25) {
+      const h=added[0].getBoundingClientRect().height + spare/added.length;
+      added.forEach(row => { for (const td of row.cells) td.style.height=h+'px'; });
+    }
+  }
+  return added.length;
+}
+function bahPrepareHistoryPrint(id){
+  const drug=drugById(id);
+  if (!drug) throw new Error('ไม่พบข้อมูลยาที่ต้องการพิมพ์');
+  const get=(id)=>{const el=$('#'+id);return el ? el.value : '';};
+  const sd=get('fStartD'), st=get('fStartT'), ed=get('fEndD'), et=get('fEndT'), q=get('fQ');
+  const rows=filterLogsByDateTime(DB.log.filter(e => e.drugId===id),sd,st,ed,et,q);
+  const filtered=!!(sd||st||ed||et||q);
+  const label=filtered ? 'เฉพาะรายการตามตัวกรองที่เลือก' : 'ประวัติทั้งหมด';
+  const now=Date.now(), when=fmtDate(now)+' '+fmtTime(now);
+  bahClearHistoryPrint();
+  bahPrintRoot=document.createElement('div');
+  bahPrintRoot.id='bahPrintRoot';
+  bahPrintRoot.setAttribute('aria-hidden','true');
+  document.body.appendChild(bahPrintRoot);
+  try {
+    let page=1;
+    let sheet=bahMakePrintSheet(drug,page,when,label,rows.length);
+    let tbody=sheet.querySelector('tbody');
+    for (const entry of rows) {
+      const row=bahMakeRealPrintRow(entry);
+      tbody.appendChild(row);
+      if (!bahPrintHasSpace(sheet)) {
+        row.remove();
+        page++;
+        sheet=bahMakePrintSheet(drug,page,when,label,rows.length);
+        tbody=sheet.querySelector('tbody');
+        tbody.appendChild(row);
+        if (!bahPrintHasSpace(sheet)) {
+          throw new Error('พบรายการหมายเหตุยาวเกินหน้ากระดาษ กรุณาย่อหมายเหตุที่ยาวผิดปกติก่อนพิมพ์');
+        }
+      }
+    }
+    const blanks=bahFillBlankCells(sheet);
+    // A crowded final page gets a separate blank continuation sheet.
+    if (blanks<4 && rows.length>0) {
+      page++;
+      sheet=bahMakePrintSheet(drug,page,when,label,rows.length);
+      bahFillBlankCells(sheet);
+    }
+    bahPrintRoot.querySelectorAll('.bah-total').forEach(el => el.textContent=String(page));
+    document.body.classList.add('bah-print-active');
+    return true;
+  } catch(err) { bahClearHistoryPrint(); throw err; }
+}
+function bahPrintDrugHistory(id){
+  try { if (bahPrepareHistoryPrint(id)) window.print(); }
+  catch(err){ console.error('BAH history printing failed',err); alert('ไม่สามารถพิมพ์ประวัติได้: '+(err.message||err)); }
+}
+window.addEventListener('beforeprint',()=>{
+  if (document.body.classList.contains('bah-print-active')) return;
+  if (currentRoute && currentRoute.name==='history' && currentRoute.id) {
+    try { bahPrepareHistoryPrint(currentRoute.id); }
+    catch(err){ console.error('BAH beforeprint failed',err); }
+  }
+});
+window.addEventListener('afterprint',bahClearHistoryPrint);
+/* END BAH MED STOCK / HISTORY PRINT */
 
 function editLogModal(entryId){
   const e = DB.log.find(x => x.id === entryId); if (!e) return;
