@@ -192,22 +192,67 @@ label{display:block;font-weight:600;margin-bottom:5px}
 .empty-row-td { height: 32px; border-bottom: 1px solid var(--line-soft); }
 
 @media print {
-  header.top, #banner, .backlink, .btnrow, .act-btns, .date-filter, .toast, .overlay, .bottom-summary { display: none !important; }
-  body { background: #fff !important; color: #000 !important; font-size: 13px !important; }
-  main { padding: 0 !important; max-width: 100% !important; }
-  .panel { border: none !important; padding: 0 !important; }
-  .scroll { max-height: none !important; border: none !important; overflow: visible !important; }
-  .print-header-info { display: block !important; margin-bottom: 12px; border-bottom: 2px solid #000; padding-bottom: 6px; }
+  header.top, #banner, .backlink, .btnrow, .act-btns, .date-filter, .toast, .overlay, .bottom-summary { 
+    display: none !important; 
+  }
+  html, body { 
+    height: 100% !important;
+    background: #fff !important; 
+    color: #000 !important; 
+    font-size: 13px !important; 
+  }
+  main { 
+    padding: 0 !important; 
+    max-width: 100% !important; 
+    height: 100% !important;
+  }
+  .panel { 
+    border: none !important; 
+    padding: 0 !important; 
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .scroll { 
+    max-height: none !important; 
+    border: none !important; 
+    overflow: visible !important; 
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .print-header-info { 
+    display: block !important; 
+    margin-bottom: 12px; 
+    border-bottom: 2px solid #000; 
+    padding-bottom: 6px; 
+  }
   .print-header-info h2 { font-size: 18px !important; margin: 0 0 4px 0 !important; text-align: center; }
   .print-header-info p { margin: 0 !important; font-size: 13px !important; text-align: center; }
   .summary { display: none !important; }
   
-  .tbl { width: 100% !important; border-collapse: collapse !important; border: 1.5px solid #000 !important; }
-  .tbl th, .tbl td { border: 1px solid #000 !important; padding: 6px 8px !important; font-size: 12px !important; color: #000 !important; }
+  /* บังคับตารางให้ยืดความสูงเต็มพื้นที่กระดาษ A4 */
+  .tbl { 
+    width: 100% !important; 
+    height: 100% !important;
+    border-collapse: collapse !important; 
+    border: 1.5px solid #000 !important; 
+  }
+  .tbl th, .tbl td { 
+    border: 1px solid #000 !important; 
+    padding: 6px 8px !important; 
+    font-size: 12px !important; 
+    color: #000 !important; 
+  }
   .tbl th { background: #f0f0f0 !important; font-weight: bold !important; text-align: center !important; }
   
-  .empty-row-td { height: 35px !important; } /* ความสูงแถวว่างเวลาพิมพ์ */
-  .tbl td .act-btns, .tbl th.col-act, .tbl td.col-act { display: none !important; } /* ซ่อนคอลัมน์ "จัดการ" เวลาพิมพ์ */
+  /* ดันแถวสุดท้ายของตารางช่องว่างให้ยืดออกจนสุดขอบล่าง */
+  .tbl tbody tr.empty-row-last td { 
+    height: 100% !important; 
+    vertical-align: top !important; 
+  }
+  
+  .tbl td .act-btns, .tbl th.col-act, .tbl td.col-act { display: none !important; }
   .tbl tr.summary-row td { font-weight: bold !important; background-color: #f9f9f9 !important; border-top: 2px solid #000 !important; border-bottom: 2px solid #000 !important; }
   
   @page { size: A4 portrait; margin: 12mm 10mm 12mm 10mm; }
@@ -541,14 +586,12 @@ async function addLogs(entries){
   }
 }
 async function updateLogEntry(entryId, patch){
-  // 1. อัปเดตข้อมูลใน Local DB (DB.log) ทันที
   const e = DB.log.find(x => x.id === entryId);
   if (e){
     Object.assign(e, patch);
     finish();
   }
 
-  // 2. ถ้าเป็นระบบ Cloud ให้ทำการอัปเดตโครงสร้างแคช (logDocs และ ownLog) แล้วส่งขึ้น Firestore
   if (MODE === 'cloud'){
     let targetDocId = null, targetIndex = -1;
     logDocs.forEach((entries, docId) => {
@@ -560,11 +603,9 @@ async function updateLogEntry(entryId, patch){
       const entries = logDocs.get(targetDocId).slice();
       entries[targetIndex] = Object.assign({}, entries[targetIndex], patch);
       
-      // อัปเดตข้อมูลในความจำชั่วคราวเพื่อป้องกันไม่ให้ Snapshot ดึงค่าเก่ามาทับ
       logDocs.set(targetDocId, entries);
       if (ownLog[targetDocId]) ownLog[targetDocId] = entries.slice();
 
-      // บันทึกลง Firestore
       await dbc.doc('log/' + targetDocId).update({entries});
     }
   }
@@ -941,7 +982,6 @@ function logRow3(e){
 function renderHistoryPanel(){
   const body = $('#hp-body');
   if (!body) return;
-  // หน้าหลัก: รายการล่าสุดอยู่ด้านบนสุด
   const rows = DB.log.slice(-100).reverse();
   body.innerHTML = rows.length
     ? '<table class="tbl"><thead><tr><th>วันที่ / เวลา</th><th>ชื่อยา</th><th class="num">จำนวน</th></tr></thead><tbody>' + rows.map(logRow3).join('') + '</tbody></table>'
@@ -1102,7 +1142,6 @@ function submitMain(){
     return;
   }
 
-  // --- ตรวจสอบการทำรายการซ้ำในวันเดียวกัน ---
   const fullQueue = form.letter + qnum;
   const now = new Date();
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
@@ -1279,10 +1318,8 @@ function renderDrugHistory(id){
     const eD = $('#fEndD').value, eT = $('#fEndT').value;
     const qVal = $('#fQ').value;
     const rawList = DB.log.filter(e => e.drugId === id);
-    // หน้าประวัติยา: เรียงลำดับจาก เก่า -> ใหม่
     const list = filterLogsByDateTime(rawList, sD, sT, eD, eT, qVal);
     
-    // คอลัมน์ตาราง: วันที่ | เวลา | คิว/ใบสั่งยา | จำนวน | คงเหลือหลังรายการ | รายการ/หมายเหตุ | ผู้ดำเนินการ
     let html = '<table class="tbl"><thead><tr>' +
       '<th>วันที่</th><th>เวลา</th><th>คิว / ใบสั่งยา</th><th class="num">จำนวน</th><th class="num">คงเหลือหลังรายการ</th>' +
       '<th>รายการ / หมายเหตุ</th><th>ผู้ดำเนินการ</th><th class="col-act">จัดการ</th></tr></thead><tbody>';
@@ -1291,7 +1328,6 @@ function renderDrugHistory(id){
     if (list.length > 0) {
       list.forEach(e => {
         const currentDateStr = fmtDate(e.ts);
-        // วันที่เดิมกับบรรทัดก่อนหน้า: แสดงเป็นข้อความจางๆ ให้ดูสะอาดตา
         const displayDate = (currentDateStr === lastDateStr) ? '<span class="sub" style="opacity:0.25">' + currentDateStr + '</span>' : '<b>' + currentDateStr + '</b>';
         lastDateStr = currentDateStr;
 
@@ -1319,7 +1355,7 @@ function renderDrugHistory(id){
       });
     }
 
-    // แถวสรุปยอดคงเหลือสุทธิปัจจุบัน 1 บรรทัด
+    // แถวสรุปยอดคงเหลือสุทธิปัจจุบัน
     html += '<tr class="summary-row">' +
       '<td colspan="3" style="text-align:right"><b>ยอดคงเหลือสุทธิปัจจุบัน:</b></td>' +
       '<td colspan="2" class="num" style="font-size:14px;color:var(--brand-dk)"><b>' + fmt(d.stock) + ' ' + esc(d.unit || 'เม็ด') + '</b></td>' +
@@ -1327,13 +1363,14 @@ function renderDrugHistory(id){
       '<td class="col-act"></td>' +
       '</tr>';
 
-    // สร้างตารางว่างให้ได้รวมทั้งหมดประมาณ 20 รายการสำหรับพิมพ์ 1 หน้า A4
-    const totalTargetRows = 20;
+    // เติมแถวว่าง 18 แถว โดยใส่ class 'empty-row-last' ในแถวสุดท้ายเพื่อให้ CSS Flexbox ดันความสูงลงไปสุดหน้า A4
+    const totalTargetRows = 18;
     const currentRowsCount = list.length;
     const emptyRowsCount = Math.max(1, totalTargetRows - currentRowsCount);
 
     for (let i = 0; i < emptyRowsCount; i++) {
-      html += '<tr>' +
+      const isLast = (i === emptyRowsCount - 1) ? ' class="empty-row-last"' : '';
+      html += '<tr' + isLast + '>' +
         '<td class="empty-row-td">&nbsp;</td>' +
         '<td class="empty-row-td">&nbsp;</td>' +
         '<td class="empty-row-td">&nbsp;</td>' +
