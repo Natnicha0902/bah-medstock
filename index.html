@@ -74,7 +74,7 @@ label{display:block;font-weight:600;margin-bottom:5px}
 .main-grid{display:grid;grid-template-columns:minmax(360px,5fr) 7fr;gap:20px;align-items:start}
 .queue-row{display:flex;gap:12px;align-items:stretch}
 .seg{display:flex;border:1.5px solid #9FB0BC;border-radius:8px;overflow:hidden;flex:none}
-.seg button{border:0;background:#fff;width:62px;font-size:24px;font-weight:700;cursor:pointer;min-height:52px}
+.seg button{border:0;background:#fff;padding:0 8px;font-size:20px;font-weight:700;cursor:pointer;min-height:52px;flex:1;min-width:44px}
 .seg button+button{border-left:1.5px solid #9FB0BC}
 .seg button.on{background:var(--brand);color:#fff}
 .queue-row input{font-size:24px;font-weight:700;min-height:52px;font-family:var(--mono)}
@@ -967,7 +967,7 @@ function onDataChanged(){
 }
 
 /* ================= Dispense ================= */
-const form = {letter: 'A', qnum: '', rx: '', drugId: null, patient: '', qty: '', bhis: ''};
+const form = {letter: 'A', qnum: '', qL1: '', qL2: '', qOther: '', qnum2: '', rx: '', drugId: null, patient: '', qty: '', bhis: ''};
 let busy = false;
 
 function logRow3(e){
@@ -1014,9 +1014,23 @@ function renderMain(){
   view.innerHTML =
   '<div class="main-grid">' +
   '<section class="panel" aria-labelledby="ft"><h1 id="ft">จ่ายยา / ตัดสต็อก</h1>' +
-    '<div class="field" id="f_queue"><label>คิว</label><div class="queue-row">' +
-      '<div class="seg" role="radiogroup" aria-label="ประเภทคิว">' + ['A','B','C'].map(l => '<button type="button" role="radio" aria-checked="' + (form.letter === l) + '" data-l="' + l + '" class="' + (form.letter === l ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' +
-      '<input id="qnum" type="text" inputmode="numeric" autocomplete="off" placeholder="เลขคิว" aria-label="เลขคิว" value="' + esc(form.qnum) + '"></div></div>' +
+    '<div class="field" id="f_queue"><label>คิว</label>' +
+      '<div class="queue-row" style="margin-bottom:8px; flex-wrap:wrap;">' +
+        '<div class="seg" role="radiogroup" aria-label="ประเภทคิว" style="overflow-x:auto;">' + ['A','B','C','P','CD','D','DS'].map(l => '<button type="button" role="radio" aria-checked="' + (form.letter === l) + '" data-l="' + l + '" class="' + (form.letter === l ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' +
+        '<input id="qnum" type="text" inputmode="numeric" autocomplete="off" placeholder="เลขคิว" aria-label="เลขคิว" style="flex:1; min-width:100px;" value="' + esc(form.qnum) + '">' +
+      '</div>' +
+      '<div class="queue-row" style="align-items:center; flex-wrap:wrap;">' +
+        '<select id="qL1" style="width:65px; min-width:65px; font-size:18px; font-weight:bold; height:52px; padding:0 4px; border:1.5px solid #9FB0BC; border-radius:8px; text-align:center;">' +
+          '<option value="">-</option>' + ['A','B','C','D','E'].map(l => '<option value="'+l+'" '+(form.qL1===l?'selected':'')+'>'+l+'</option>').join('') +
+        '</select>' +
+        '<select id="qL2" style="width:75px; min-width:75px; font-size:18px; font-weight:bold; height:52px; padding:0 4px; border:1.5px solid #9FB0BC; border-radius:8px; text-align:center;">' +
+          '<option value="">-</option>' + ['A','B','C','D','E'].map(l => '<option value="'+l+'" '+(form.qL2===l?'selected':'')+'>'+l+'</option>').join('') +
+          '<option value="OTHER" '+(form.qL2==='OTHER'?'selected':'')+'>อื่นๆ</option>' +
+        '</select>' +
+        '<input id="qOther" type="text" autocomplete="off" placeholder="ระบุ" style="display:'+(form.qL2==='OTHER'?'block':'none')+'; width:80px; font-size:18px; font-weight:bold; text-transform:uppercase; text-align:center;" value="' + esc(form.qOther) + '">' +
+        '<input id="qnum2" type="text" inputmode="numeric" autocomplete="off" placeholder="เลขคิว 4 หลัก (เช่น 0255)" aria-label="เลขคิว 4 หลัก" maxlength="4" style="flex:1; min-width:140px;" value="' + esc(form.qnum2) + '">' +
+      '</div>' +
+    '</div>' +
     '<div class="field" id="f_rx"><label for="rx">เลขที่ใบสั่งยา (ไม่บังคับ)</label><input id="rx" type="text" autocomplete="off" placeholder="ยิงบาร์โค้ดเลขที่ใบสั่งยา (ถ้ามี)" value="' + esc(form.rx) + '"></div>' +
     '<div class="field" id="f_drug"><label for="drugQ">ยา</label><div id="drugBox">' + pickerHTML() + '</div></div>' +
     '<div class="field" id="f_patient" hidden><label for="patient">ชื่อ-นามสกุล ผู้ใช้ยา (ยาตู้ 28)</label><input id="patient" type="text" autocomplete="off" placeholder="ชื่อ-นามสกุลผู้ป่วยที่ใช้ยานี้" value="' + esc(form.patient) + '"><div class="hint">ยาตู้ 28 เป็นยาเสพติด ต้องบันทึกชื่อผู้ใช้ยาทุกครั้ง</div></div>' +
@@ -1096,6 +1110,20 @@ function bindMain(){
   const qn = $('#qnum');
   qn.addEventListener('input', () => { qn.value = qn.value.replace(/\D/g, ''); form.qnum = qn.value; $('#f_queue').classList.remove('err'); });
   qn.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); $('#rx').focus(); } });
+
+  const qL1 = $('#qL1'), qL2 = $('#qL2'), qOther = $('#qOther'), qn2 = $('#qnum2');
+  qL1.addEventListener('change', () => { form.qL1 = qL1.value; $('#f_queue').classList.remove('err'); $('#qnum2').focus(); });
+  qL2.addEventListener('change', () => { 
+    form.qL2 = qL2.value; 
+    $('#f_queue').classList.remove('err'); 
+    if (form.qL2 === 'OTHER') { qOther.style.display = 'block'; qOther.focus(); } 
+    else { qOther.style.display = 'none'; form.qOther = ''; $('#qnum2').focus(); }
+  });
+  qOther.addEventListener('input', () => { form.qOther = qOther.value.toUpperCase(); $('#f_queue').classList.remove('err'); });
+  
+  qn2.addEventListener('input', () => { qn2.value = qn2.value.replace(/\D/g, ''); form.qnum2 = qn2.value; $('#f_queue').classList.remove('err'); });
+  qn2.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); $('#rx').focus(); } });
+
   const rx = $('#rx');
   rx.addEventListener('input', () => { form.rx = rx.value; $('#f_rx').classList.remove('err'); });
   rx.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); const q = $('#drugQ'); (q || $('#qty')).focus(); } });
@@ -1116,14 +1144,25 @@ function submitMain(){
   if (busy) return;
   clearFlags();
   const missing = [], order = [];
-  const qnum = form.qnum.trim(), rx = form.rx.trim();
+  
+  const qnum = form.qnum.trim();
+  const qnum2 = form.qnum2.trim();
+  const rx = form.rx.trim();
+  
+  let q1 = qnum ? (form.letter + qnum) : '';
+  let prefix2 = form.qL2 === 'OTHER' ? form.qOther.trim().toUpperCase() : ((form.qL1 || '') + (form.qL2 || ''));
+  let q2 = qnum2 ? (prefix2 + qnum2.padStart(4, '0')) : '';
+  const fullQueue = [q1, q2].filter(Boolean).join(' | ');
+
   const qty = parseQty(form.qty);
   const d = drugById(form.drugId);
   const patient = form.patient.trim();
-  if (!qnum){ missing.push('เลขคิว'); order.push('f_queue'); }
+  
+  if (!fullQueue){ missing.push('คิว (กรุณากรอกช่องบน หรือ ช่องล่าง อย่างน้อย 1 ช่อง)'); order.push('f_queue'); }
   if (!d){ missing.push('ยา'); order.push('f_drug'); }
   if (d && is28(d.house) && !patient){ missing.push('ชื่อ-นามสกุล ผู้ใช้ยา (ยาตู้ 28)'); order.push('f_patient'); }
   if (!(qty > 0)){ missing.push('จำนวนยา (ตัวเลขมากกว่า 0 ทศนิยมไม่เกิน 2 ตำแหน่ง)'); order.push('f_qty'); }
+  
   if (missing.length){
     order.forEach(id => $('#' + id).classList.add('err'));
     alertBox('กรอกข้อมูลไม่ครบ', '', {html: 'กรุณาตรวจสอบช่องต่อไปนี้<ul>' + missing.map(m => '<li>' + esc(m) + '</li>').join('') + '</ul>', onOk: () => flag(order[0])});
@@ -1143,10 +1182,9 @@ function submitMain(){
     alertBox('สต็อกไม่พอ', d.name + ' คงเหลือ ' + fmt(d.stock) + ' ' + (d.unit || 'เม็ด') + ' แต่ต้องการจ่าย ' + fmt(qty), {tone: 'danger', onOk: () => $('#qty').focus()});
     return;
   }
-  confirmDispense(d, qty, staff, qnum, rx, patient);
+  confirmDispense(d, qty, staff, fullQueue, rx, patient);
 }
-function confirmDispense(d, qty, staff, qnum, rx, patient){
-  const queue = form.letter + qnum;
+function confirmDispense(d, qty, staff, queue, rx, patient){
   openModal({title: 'ยืนยันการจ่ายยา', dismissible: true,
     html: '<table class="kv"><tr><td>คิว</td><td>' + esc(queue) + '</td></tr>' +
       '<tr><td>เลขที่ใบสั่งยา</td><td>' + (rx ? esc(rx) : '-') + '</td></tr>' +
@@ -1184,7 +1222,7 @@ async function commitDispense(drugId, qty, bhis, queue, rx, patient){
     return;
   }
   busy = false;
-  form.qnum = ''; form.rx = ''; form.drugId = null; form.qty = ''; form.patient = '';
+  form.qnum = ''; form.qL1 = ''; form.qL2 = ''; form.qOther = ''; form.qnum2 = ''; form.rx = ''; form.drugId = null; form.qty = ''; form.patient = '';
   if (currentRoute.name === 'main') renderMain();
   showPrepare(drugId, qty, queue, rx);
 }
