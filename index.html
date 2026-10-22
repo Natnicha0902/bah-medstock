@@ -1016,7 +1016,7 @@ function renderMain(){
   '<section class="panel" aria-labelledby="ft"><h1 id="ft">จ่ายยา / ตัดสต็อก</h1>' +
     '<div class="field" id="f_queue"><label>คิว</label>' +
       '<div class="queue-row" style="margin-bottom:8px; flex-wrap:wrap;">' +
-        '<div class="seg" role="radiogroup" aria-label="ประเภทคิว" style="overflow-x:auto;">' + ['A','B','C','P','CD','D','DS','N'].map(l => '<button type="button" role="radio" aria-checked="' + (form.letter === l) + '" data-l="' + l + '" class="' + (form.letter === l ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' +
+        '<div class="seg" role="radiogroup" aria-label="ประเภทคิว" style="overflow-x:auto;">' + ['A','B','C','P','DC','D','DS','N'].map(l => '<button type="button" role="radio" aria-checked="' + (form.letter === l) + '" data-l="' + l + '" class="' + (form.letter === l ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' +
         '<input id="qnum" type="text" inputmode="numeric" autocomplete="off" placeholder="เลขคิว" aria-label="เลขคิว" style="flex:1; min-width:100px;" value="' + esc(form.qnum) + '">' +
       '</div>' +
       '<div class="queue-row" style="align-items:center; flex-wrap:wrap;">' +
