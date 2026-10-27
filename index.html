@@ -1,3 +1,27 @@
+นี่คือโค้ดแบบเต็มทั้งหมดที่คุณสามารถนำไปวางแทนที่ไฟล์เดิมได้เลยครับ โดยในเวอร์ชันนี้มีการอัปเดตและปรับปรุงตามความต้องการทั้งหมดดังนี้ครับ:
+
+1. **ระบบล็อคอิน 2 โหมด (แอดมิน / เจ้าหน้าที่ทั่วไป):**
+   * มีปุ่มให้เลือกว่าจะเข้าใช้งานในฐานะอะไร
+   * **เจ้าหน้าที่:** ใช้รหัส `123456`
+   * **แอดมิน:** ใช้ Username `admin` และ Password `112233` (เปลี่ยนรหัสแอดมินและรหัสเจ้าหน้าที่ได้ในเมนูตั้งค่าของแอดมิน)
+2. **การจำกัดสิทธิ์เจ้าหน้าที่ทั่วไป:**
+   * ไม่เห็นเมนูจัดการเจ้าหน้าที่
+   * ในการดูประวัติ, การ Export เป็น Excel/CSV และการพิมพ์ จะดึงข้อมูลได้แค่ **3 วันล่าสุด** เท่านั้น (ป้องกันการนำข้อมูลออก) หากแอดมินล็อคอินจะเห็นข้อมูลทั้งหมด
+3. **หน้ารายละเอียดข้อมูลยา (อัปเดตส่วนบนและการนับสต็อก):**
+   * แสดงสรุปจำนวนยาปัจจุบันกล่องใหญ่ๆ ไว้ด้านบนสุด พร้อมแปลงหน่วยอัตโนมัติ (กล่อง/แผง/เม็ด)
+   * เพิ่มส่วน **ตรวจนับยา / ลงชื่อเวร** มีให้เลือกตำแหน่ง (เจ้าหน้าที่/แม่เวรเปิดเวร/แม่เวรปิดเวร)
+   * ระบุเลข BHIS ถ้ามีข้อมูลจะขึ้นชื่อให้อัตโนมัติ แต่ถ้าไม่มีให้พิมพ์ชื่อเองได้
+   * กดยืนยันแล้วระบบจะบันทึกประวัติประเภท "ตรวจนับยา" ลงในระบบ (ประวัติขึ้นแสดงโชว์ชัดเจนว่าใครนับ เวลาไหน หมายเหตุอะไร)
+4. **ฟังก์ชันที่ขอไว้รอบที่แล้วยังอยู่ครบ:** 
+   * การเลือกคิว 2 แถวแบบละเอียด (มีปุ่ม P, CD, D, DS และอื่นๆ)
+   * การเลือกกรองดูประวัติโดยกดเรียง "ใหม่ไปเก่า"
+   * ฟอนต์การปริ้นประวัติขนาดใหญ่ขึ้น (ประมาณเบอร์ 14)
+
+---
+
+### โค้ดทั้งหมด (คัดลอกทั้งหมดนี้ไปแทนโค้ดเดิม)
+
+```html
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -36,6 +60,10 @@ button,input,select,textarea{font:inherit;color:inherit}
 .top .btn.ghost{color:#fff;border-color:#4C8994}
 .top .btn.ghost:hover{background:#0B5665}
 body.locked .nav,body.locked #btnShare,body.locked #btnSettings,body.locked #btnLock{display:none}
+
+/* ซ่อนแท็บเจ้าหน้าที่ถ้าไม่ใช่แอดมิน */
+body.role-staff .nav a[data-nav="staff"] { display:none !important; }
+
 .pill{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:600;border-radius:999px;padding:3px 12px;background:#0B5665;color:#DFF3F6;white-space:nowrap}
 .pill i{width:9px;height:9px;border-radius:50%;background:#9AB;display:inline-block}
 .pill.cloud i{background:#4ADE80}
@@ -63,7 +91,7 @@ h2{font-size:18px;margin:0 0 10px}
 .btnrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 input[type=text],input[type=number],input[type=search],input[type=password],input[type=date],input[type=time],input:not([type]),textarea,select{width:100%;border:1.5px solid #9FB0BC;border-radius:6px;padding:10px 12px;background:#fff;min-height:44px}
 input:focus,textarea:focus,select:focus{border-color:var(--brand)}
-.err input,input.err{border-color:var(--danger);background:var(--danger-soft)}
+.err input,input.err,select.err{border-color:var(--danger);background:var(--danger-soft)}
 label{display:block;font-weight:600;margin-bottom:5px}
 .field{margin-bottom:16px}
 .hint{font-size:14px;margin-top:5px;color:var(--muted);min-height:20px}
@@ -74,10 +102,10 @@ label{display:block;font-weight:600;margin-bottom:5px}
 .main-grid{display:grid;grid-template-columns:minmax(360px,5fr) 7fr;gap:20px;align-items:start}
 .queue-row{display:flex;gap:12px;align-items:stretch}
 .seg{display:flex;border:1.5px solid #9FB0BC;border-radius:8px;overflow:hidden;flex:none}
-.seg button{border:0;background:#fff;padding:0 8px;font-size:20px;font-weight:700;cursor:pointer;min-height:52px;flex:1;min-width:44px}
+.seg button{border:0;background:#fff;padding:0 8px;font-size:18px;font-weight:700;cursor:pointer;min-height:52px;flex:1;min-width:44px}
 .seg button+button{border-left:1.5px solid #9FB0BC}
 .seg button.on{background:var(--brand);color:#fff}
-.queue-row input{font-size:24px;font-weight:700;min-height:52px;font-family:var(--mono)}
+.queue-row input{font-size:20px;font-weight:700;min-height:52px;font-family:var(--mono)}
 .picker{position:relative}
 .sugg{position:absolute;z-index:20;left:0;right:0;top:100%;background:#fff;border:1.5px solid var(--brand);border-radius:6px;margin-top:2px;max-height:320px;overflow:auto}
 .sugg .it{padding:9px 12px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line-soft)}
@@ -106,6 +134,7 @@ label{display:block;font-weight:600;margin-bottom:5px}
 .t-add,.t-initial{background:var(--ok-soft);color:var(--ok)}
 .t-deduct{background:var(--danger-soft);color:var(--danger)}
 .t-adjust{background:var(--warn-soft);color:var(--warn)}
+.t-count{background:#DBEAFE;color:#1E40AF}
 .t-void{background:#EEE;color:#444}
 .low{display:inline-block;background:var(--danger);color:#fff;font-size:12px;font-weight:700;border-radius:4px;padding:0 6px;margin-left:6px;vertical-align:middle}
 .pos{color:var(--ok);font-weight:700}
@@ -174,10 +203,9 @@ label{display:block;font-weight:600;margin-bottom:5px}
 .qrbox{display:flex;justify-content:center;padding:14px;background:#fff;border:1px solid var(--line);border-radius:8px;margin-bottom:14px;min-height:120px;align-items:center}
 .qrbox img,.qrbox canvas{max-width:100%;height:auto}
 .sec-title{font-weight:700;margin:14px 0 6px}
-.gate{max-width:400px;margin:9vh auto 0;text-align:center}
-.gate h1{font-size:30px;margin-bottom:4px}
-.gate .sub{margin-bottom:18px}
-.gate input{text-align:center;font-size:24px;letter-spacing:6px;min-height:54px}
+.gate{max-width:440px;margin:9vh auto 0;text-align:center}
+.gate h1{font-size:30px;margin-bottom:20px}
+.gate input{text-align:center;font-size:20px;min-height:54px;margin-bottom:14px}
 .gate .form-err{text-align:center}
 .chk{display:flex;gap:8px;align-items:center;margin:8px 0 0;font-weight:500}
 .chk input{width:18px;height:18px}
@@ -277,10 +305,9 @@ label{display:block;font-weight:600;margin-bottom:5px}
   }
   #bahPrintRoot .bah-sheet { break-inside:avoid; page-break-inside:avoid; }
 }
-
 </style>
 </head>
-<body class="locked">
+<body class="locked role-staff">
 <header class="top">
   <div class="brand">BAH <span>med stock</span></div>
   <nav class="nav" id="nav">
@@ -309,6 +336,8 @@ label{display:block;font-weight:600;margin-bottom:5px}
 const SEED = [{"house": "30-ข-1", "name": "Serlift", "barcode": "88526001"}, {"house": "30-ข-2", "name": "Jardiance", "barcode": "88526002"}, {"house": "30-ข-3", "name": "Ezetrol", "barcode": "88526003"}, {"house": "30-ข-4", "name": "Prevacid 15", "barcode": "88526004"}, {"house": "30-ข-5", "name": "Januvia", "barcode": "88526005"}, {"house": "30-ข-6", "name": "Jardiance DUO", "barcode": "88526006"}, {"house": "30-ค-1", "name": "Lyrica 75", "barcode": "88526007"}, {"house": "30-ค-2", "name": "Prevacid 30", "barcode": "88526008"}, {"house": "30-ค-3", "name": "Celebrex 200", "barcode": "88526009"}, {"house": "30-ค-4", "name": "Xarator 10", "barcode": "88526010"}, {"house": "28-ค-1", "name": "Rubifen 10 mg tab", "barcode": "88526011"}, {"house": "28-ค-2", "name": "Pseudoephedrine syrup 30mg/5mL", "barcode": "88526012"}, {"house": "28-ค-3-A", "name": "Concerta 18 mg tab", "barcode": "88526013"}, {"house": "28-ค-3-B", "name": "Methylphenidate Sandoze 18 mg tab", "barcode": "88526014"}, {"house": "28-ค-3-C", "name": "Concerta 36 mg tab", "barcode": "88526015"}, {"house": "28-ค-3-D", "name": "Ritalin 10 mg tab", "barcode": "88526016"}, {"house": "28-ค-3-E", "name": "Zolpidem 10 mg tab", "barcode": "88526017"}, {"house": "28-ค-4-A", "name": "MST 30 mg tab", "barcode": "88526018"}, {"house": "28-8-4-B", "name": "Kapanol 20 mg cap", "barcode": "88526019"}];
 const SHARE_URL_DEFAULT = "https://natnicha0902.github.io/bah-medstock/";
 const DEFAULT_PASSCODE = '123456';
+const DEFAULT_ADMIN_USER = 'admin';
+const DEFAULT_ADMIN_PASS = '112233';
 
 /* ================= Embedded Firebase Config ================= */
 const EMBEDDED_FIREBASE_CONFIG = {
@@ -335,7 +364,7 @@ function dayKey(ts){ const d = new Date(ts); return d.getFullYear() + pad(d.getM
 function parseQty(s){ s = String(s == null ? '' : s).trim().replace(',', '.'); if (!/^\d+(\.\d{1,2})?$/.test(s)) return NaN; return Number(s); }
 const norm = s => String(s == null ? '' : s).trim().toLowerCase();
 const is28 = house => /^\s*28\s*-/.test(String(house || ''));
-const TYPE_LABEL = {dispense:'จ่ายยา', add:'เติมสต็อก', deduct:'หักสต็อก', adjust:'ปรับยอด', initial:'ยอดเริ่มต้น', void:'ยกเลิกรายการ'};
+const TYPE_LABEL = {dispense:'จ่ายยา', add:'เติมสต็อก', deduct:'หักสต็อก', adjust:'ปรับยอด', initial:'ยอดเริ่มต้น', count:'ตรวจนับยา', void:'ยกเลิกรายการ'};
 
 function errText(e){
   const c = e && e.code;
@@ -518,7 +547,11 @@ function startCloud(db){
   db.collection('config').onSnapshot(s => {
     const st = s.docs.find(d => d.id === 'settings'), au = s.docs.find(d => d.id === 'auth');
     DB.settings = Object.assign(DEF_SETTINGS(), st ? st.data() : {});
-    DB.auth = au && au.data() && au.data().hash ? {salt: au.data().salt, hash: au.data().hash, changedAt: au.data().changedAt} : null;
+    if(au && au.data()){
+        DB.auth = au.data();
+    } else {
+        DB.auth = null;
+    }
     metaSeeded = s.docs.some(d => d.id === 'meta');
     flags.config = true; cloudChanged();
   }, onErr);
@@ -687,7 +720,7 @@ function setSync(kind, code){
 function updateBanner(){
   const el = $('#banner'); let h = '';
   if (!storageOK) h += '<div class="banner red">เบราว์เซอร์นี้ไม่อนุญาตให้เก็บข้อมูลถาวร ข้อมูลจะหายเมื่อปิดหน้านี้ กรุณา Export ไฟล์สำรองไว้</div>';
-  if (isUnlocked() && !DB.auth) h += '<div class="banner">ยังใช้รหัสผ่านตั้งต้นอยู่ กรุณาเปลี่ยนรหัสผ่านที่ <a href="#" id="bnSet">ตั้งค่า</a></div>';
+  if (isUnlocked() && currentRole === 'admin' && !DB.auth) h += '<div class="banner">ยังใช้รหัสผ่านแอดมินตั้งต้นอยู่ กรุณาเปลี่ยนรหัสผ่านที่ <a href="#" id="bnSet">ตั้งค่า</a></div>';
   if (isUnlocked() && MODE === 'local') h += '<div class="banner">เครื่องนี้ยังไม่ได้เชื่อมต่อระบบซิงก์ออนไลน์ ข้อมูลจะไม่ถูกแชร์กับเครื่องอื่น ตั้งค่าได้ที่ <a href="#" id="bnFb">ตั้งค่า → ระบบซิงก์ออนไลน์</a></div>';
   el.innerHTML = h;
   const l = $('#bnSet'); if (l) l.addEventListener('click', e => { e.preventDefault(); openSettings(); });
@@ -696,32 +729,134 @@ function updateBanner(){
 
 /* ================= Passcode gate ================= */
 let unlockTok = null;
+let currentRole = 'staff';
 try{ unlockTok = sessionStorage.getItem('bah.unlock'); }catch(_){}
-const authToken = () => sha256hex('tok|' + (DB.auth ? DB.auth.hash : 'default'));
-const isUnlocked = () => !!unlockTok && unlockTok === authToken();
-const checkPass = p => DB.auth ? sha256hex(DB.auth.salt + '|' + p) === DB.auth.hash : p === DEFAULT_PASSCODE;
-function setUnlocked(on){
-  unlockTok = on ? authToken() : null;
-  try{ if (on) sessionStorage.setItem('bah.unlock', unlockTok); else sessionStorage.removeItem('bah.unlock'); }catch(_){}
+
+const authToken = (role) => {
+    if (role === 'admin') {
+        return sha256hex('tok|admin|' + (DB.auth && DB.auth.adminHash ? DB.auth.adminHash : 'default_admin'));
+    }
+    return sha256hex('tok|staff|' + (DB.auth && DB.auth.hash ? DB.auth.hash : 'default'));
+};
+
+const isUnlocked = () => {
+    try{
+        const tok = sessionStorage.getItem('bah.unlock');
+        const r = sessionStorage.getItem('bah.role');
+        if (tok && r && tok === authToken(r)){
+            currentRole = r;
+            document.body.classList.remove('role-staff', 'role-admin');
+            document.body.classList.add('role-' + currentRole);
+            return true;
+        }
+    }catch(_){}
+    return false;
+};
+
+const checkPass = p => DB.auth && DB.auth.hash ? sha256hex(DB.auth.salt + '|' + p) === DB.auth.hash : p === DEFAULT_PASSCODE;
+const checkAdmin = (u, p) => {
+    if (DB.auth && DB.auth.adminHash){
+        return (u === DB.auth.adminUser) && (sha256hex(DB.auth.adminSalt + '|' + p) === DB.auth.adminHash);
+    }
+    return u === DEFAULT_ADMIN_USER && p === DEFAULT_ADMIN_PASS;
+};
+
+function setUnlocked(on, role = 'staff'){
+  unlockTok = on ? authToken(role) : null;
+  try{ 
+      if (on) {
+          sessionStorage.setItem('bah.unlock', unlockTok);
+          sessionStorage.setItem('bah.role', role);
+          currentRole = role;
+          document.body.classList.remove('role-staff', 'role-admin');
+          document.body.classList.add('role-' + currentRole);
+      } else {
+          sessionStorage.removeItem('bah.unlock');
+          sessionStorage.removeItem('bah.role');
+          document.body.classList.remove('role-staff', 'role-admin');
+      }
+  }catch(_){}
 }
+
 let fails = 0, blockedUntil = 0;
 function showGate(){
   document.body.classList.add('locked');
   modalRoot.innerHTML = '';
-  view.innerHTML = '<div class="gate panel" id="gate"><h1>BAH med stock</h1><div class="sub">กรุณากรอกรหัสผ่านเพื่อเข้าใช้งาน</div>' +
-    '<div class="field"><input id="gpass" type="password" autocomplete="off" inputmode="numeric" aria-label="รหัสผ่าน" placeholder="••••••"></div>' +
-    '<div class="form-err" id="gerr" role="alert"></div><button type="button" class="btn primary big" id="gok">เข้าสู่ระบบ</button></div>';
-  const inp = $('#gpass'), err = $('#gerr');
+  
+  view.innerHTML = `
+    <div class="gate panel" id="gate">
+      <h1>BAH med stock</h1>
+      <div style="display:flex; gap:10px; margin-bottom:20px; border-bottom:2px solid var(--line-soft); padding-bottom:10px;">
+        <button id="tabS" class="btn primary" style="flex:1; font-weight:bold;">เจ้าหน้าที่ทั่วไป</button>
+        <button id="tabA" class="btn ghost" style="flex:1; font-weight:bold; color:var(--muted); border-color:transparent;">แอดมิน</button>
+      </div>
+      <div id="formS">
+        <div class="field"><input id="gpassS" type="password" autocomplete="off" inputmode="numeric" placeholder="รหัสผ่านเจ้าหน้าที่ (เริ่มต้น 123456)"></div>
+      </div>
+      <div id="formA" hidden>
+        <div class="field"><input id="guserA" type="text" autocomplete="off" placeholder="Username แอดมิน (เริ่มต้น admin)"></div>
+        <div class="field"><input id="gpassA" type="password" autocomplete="off" placeholder="รหัสผ่าน แอดมิน (เริ่มต้น 112233)"></div>
+      </div>
+      <div class="form-err" id="gerr" role="alert"></div>
+      <button type="button" class="btn primary big" id="gok" style="margin-top:10px;">เข้าสู่ระบบ</button>
+    </div>
+  `;
+  
+  let loginMode = 'staff';
+  const tabS = $('#tabS'), tabA = $('#tabA'), formS = $('#formS'), formA = $('#formA'), err = $('#gerr');
+  const gpassS = $('#gpassS'), guserA = $('#guserA'), gpassA = $('#gpassA');
+  
+  const setMode = m => {
+      loginMode = m;
+      err.textContent = '';
+      if (m === 'staff') {
+          tabS.className = 'btn primary'; tabS.style.color = '#fff';
+          tabA.className = 'btn ghost'; tabA.style.color = 'var(--muted)';
+          formS.hidden = false; formA.hidden = true; gpassS.focus();
+      } else {
+          tabA.className = 'btn primary'; tabA.style.color = '#fff';
+          tabS.className = 'btn ghost'; tabS.style.color = 'var(--muted)';
+          formA.hidden = false; formS.hidden = true; guserA.focus();
+      }
+  };
+  tabS.addEventListener('click', () => setMode('staff'));
+  tabA.addEventListener('click', () => setMode('admin'));
+
   const go1 = () => {
     const now = Date.now();
-    if (now < blockedUntil){ err.textContent = 'ใส่รหัสผิดหลายครั้ง กรุณารอ ' + Math.ceil((blockedUntil - now) / 1000) + ' วินาที'; return; }
-    if (checkPass(inp.value)){ fails = 0; setUnlocked(true); document.body.classList.remove('locked'); updateBanner(); route(); }
-    else { fails++; inp.value = ''; err.textContent = 'รหัสผ่านไม่ถูกต้อง'; if (fails >= 5){ blockedUntil = Date.now() + 30000; fails = 0; err.textContent = 'ใส่รหัสผิดหลายครั้ง กรุณารอ 30 วินาที'; } inp.focus(); }
+    if (now < blockedUntil){ err.textContent = 'ระบุผิดหลายครั้ง กรุณารอ ' + Math.ceil((blockedUntil - now) / 1000) + ' วินาที'; return; }
+    
+    let valid = false;
+    if (loginMode === 'staff') {
+        valid = checkPass(gpassS.value);
+    } else {
+        valid = checkAdmin(guserA.value, gpassA.value);
+    }
+
+    if (valid){ 
+        fails = 0; 
+        setUnlocked(true, loginMode); 
+        document.body.classList.remove('locked'); 
+        updateBanner(); 
+        route(); 
+    } else { 
+        fails++; 
+        if(loginMode === 'staff') gpassS.value = '';
+        else gpassA.value = '';
+        err.textContent = 'ข้อมูลไม่ถูกต้อง'; 
+        if (fails >= 5){ blockedUntil = Date.now() + 30000; fails = 0; err.textContent = 'ใส่ข้อมูลผิดหลายครั้ง กรุณารอ 30 วินาที'; } 
+        if(loginMode === 'staff') gpassS.focus(); else gpassA.focus();
+    }
   };
   $('#gok').addEventListener('click', go1);
-  inp.addEventListener('keydown', e => { if (e.key === 'Enter') go1(); });
-  inp.focus();
+  const triggerEnter = e => { if (e.key === 'Enter') go1(); };
+  gpassS.addEventListener('keydown', triggerEnter);
+  guserA.addEventListener('keydown', triggerEnter);
+  gpassA.addEventListener('keydown', triggerEnter);
+  
+  gpassS.focus();
 }
+
 function applyGate(){ if (isUnlocked()){ document.body.classList.remove('locked'); updateBanner(); route(); } else showGate(); }
 function lockNow(){ setUnlocked(false); showGate(); updateBanner(); }
 $('#btnLock').addEventListener('click', lockNow);
@@ -731,6 +866,13 @@ setInterval(() => {
   const m = Number(DB.settings.autoLockMin) || 0;
   if (m > 0 && isUnlocked() && Date.now() - lastAct > m * 60000) lockNow();
 }, 15000);
+
+// สำหรับเจ้าหน้าที่ทั่วไป ดึงข้อมูลแค่ 3 วันล่าสุดมาใช้ใน History/Export
+function getLogsView() {
+    if (currentRole === 'admin') return DB.log.slice();
+    const cutoff = Date.now() - (3 * 24 * 60 * 60 * 1000); // ย้อนหลัง 3 วัน
+    return DB.log.filter(e => e.ts >= cutoff);
+}
 
 /* ================= Code 128 Barcode ================= */
 const C128 = ["212222","222122","222221","121223","121322","131222","122213","122312","132212","221213","221312","231212","112232","122132","122231","113222","123122","123221","223211","221132","221231","213212","223112","312131","311222","321122","321221","312212","322112","322211","212123","212321","232121","111323","131123","131321","112313","132113","132311","211313","231113","231311","112133","112331","132131","113123","113321","133121","313121","211331","231131","213113","213311","213131","311123","311321","331121","312113","312311","332111","314111","221411","431111","111224","111422","121124","121421","141122","141221","112214","112412","122114","122411","142112","142211","241211","221114","413111","241112","134111","111242","121142","121241","114212","124112","124211","411212","421112","421211","212141","214121","412121","111143","111341","131141","114113","114311","411113","411311","113141","114131","311141","411131","211412","211214","211232","2331112"];
@@ -837,7 +979,7 @@ function confirmBox(title, msg, o){
 function formModal(o){
   const html = (o.top || '') + o.fields.map(f =>
     '<div class="field" id="ff_' + f.id + '"><label for="fm_' + f.id + '">' + esc(f.label) + '</label>' +
-    '<input id="fm_' + f.id + '" type="' + (f.type || 'text') + '" autocomplete="off" ' + (f.inputmode ? 'inputmode="' + f.inputmode + '" ' : '') + 'placeholder="' + esc(f.placeholder || '') + '" value="' + esc(f.value == null ? '' : f.value) + '">' +
+    '<input id="fm_' + f.id + '" type="' + (f.type || 'text') + '" autocomplete="off" ' + (f.inputmode ? 'inputmode="' + f.inputmode + '" ' : '') + 'placeholder="' + esc(f.placeholder || '') + '" value="' + esc(f.value == null ? '' : f.value) + '" ' + (f.readonly ? 'readonly' : '') + '>' +
     (f.hint ? '<div class="hint">' + f.hint + '</div>' : '') + '</div>').join('') +
     (o.extra || '') + '<div class="form-err" id="fm_err" role="alert"></div>';
   return openModal({title: o.title, html, width: o.width,
@@ -867,7 +1009,7 @@ const STAFF_HEAD = ['ชื่อ-นามสกุล','เลข BHIS'];
 const typeLabel = e => e.type === 'dispense' && VOIDED.has(e.id) ? 'จ่ายยา (ยกเลิกแล้ว)' : (TYPE_LABEL[e.type] || e.type);
 function logRows(list){
   return list.map(e => { const d = drugById(e.drugId);
-    return [fmtDate(e.ts), fmtTime(e.ts), d ? d.house : (e.house || ''), nameOfEntry(e), typeLabel(e), e.delta, e.balance == null ? '' : e.balance, e.queue || '', e.rx || '', e.patient || '', e.staffName || '', e.bhis || '', e.note || '']; });
+    return [fmtDate(e.ts), fmtTime(e.ts), d ? d.house : (e.house || ''), nameOfEntry(e), typeLabel(e), (e.type === 'count' ? '-' : e.delta), e.balance == null ? '' : e.balance, e.queue || '', e.rx || '', e.patient || '', e.staffName || '', e.bhis || '', e.note || '']; });
 }
 const drugRows = list => list.map(d => [d.house, d.name, d.barcode, d.stock, d.unit || 'เม็ด', d.stripsPerBox || '', d.tabsPerStrip || '', hasPack(d) ? breakdownText(d.stock, d) : '', d.minStock || '', d.patient || '']);
 const staffRows = () => DB.staff.map(s => [s.name, s.bhis]);
@@ -941,6 +1083,12 @@ function route(){
   document.body.classList.remove('locked');
   const parts = location.hash.replace(/^#\/?/, '').split('/');
   let name = parts[0] || 'main'; const id = parts[1] || null;
+  
+  if (name === 'staff' && currentRole !== 'admin') {
+      toast('หน้านี้สำหรับแอดมินเท่านั้น', 'warn');
+      name = 'main';
+  }
+  
   if (!['history', 'drugs', 'staff'].includes(name)) name = 'main';
   currentRoute = {name, id};
   $$('#nav a').forEach(a => a.classList.toggle('on', a.dataset.nav === name));
@@ -960,7 +1108,9 @@ function onDataChanged(){
     drawDrugList(currentRoute.id);
     const dirty = ['opAdd', 'opDed', 'opNote', 'opBhis'].some(i => { const e = $('#' + i); return e && e.value; });
     if (!dirty) drawDrugDetail(currentRoute.id);
-    else { const d = drugById(currentRoute.id), bs = $('.bigstock'); if (d && bs) bs.textContent = fmt(d.stock); }
+    else { const d = drugById(currentRoute.id); if (d){
+        const bs = $$('.bigstock'); bs.forEach(x => x.textContent = fmt(d.stock));
+    } }
   }
   else if (n === 'staff' && $('#stafflist')) drawStaff();
   updateBhisHint();
@@ -972,22 +1122,23 @@ let busy = false;
 
 function logRow3(e){
   const d = drugById(e.drugId);
-  const sign = e.delta > 0 ? '+' : '−';
-  const cls = e.delta > 0 ? 'pos' : 'neg';
+  const sign = e.delta > 0 ? '+' : (e.delta < 0 ? '−' : '');
+  const cls = e.delta > 0 ? 'pos' : (e.delta < 0 ? 'neg' : '');
+  const dVal = e.delta === 0 ? '-' : fmt(Math.abs(e.delta));
   const extra = e.queue ? ' คิว ' + esc(e.queue) : '';
   const pt = e.patient ? '<div class="sub">ผู้ใช้ยา: ' + esc(e.patient) + '</div>' : '';
   return '<tr class="' + (d ? 'click' : '') + (VOIDED.has(e.id) ? ' voided' : '') + '"' + (d ? ' tabindex="0" data-go="#/history/' + d.id + '"' : '') + '>' +
     '<td class="dt">' + fmtDate(e.ts) + '<small>' + fmtTime(e.ts) + '</small></td>' +
     '<td><b>' + esc(nameOfEntry(e)) + '</b><div class="sub"><span class="tag t-' + e.type + '">' + typeLabel(e) + '</span>' + extra + '</div>' + pt + '</td>' +
-    '<td class="num ' + cls + '">' + sign + fmt(Math.abs(e.delta)) + '</td></tr>';
+    '<td class="num ' + cls + '">' + sign + dVal + '</td></tr>';
 }
 function renderHistoryPanel(){
   const body = $('#hp-body');
   if (!body) return;
-  const rows = DB.log.slice(-100).reverse();
+  const rows = getLogsView().slice(-100).reverse();
   body.innerHTML = rows.length
     ? '<table class="tbl"><thead><tr><th>วันที่ / เวลา</th><th>ชื่อยา</th><th class="num">จำนวน</th></tr></thead><tbody>' + rows.map(logRow3).join('') + '</tbody></table>'
-    : '<div class="empty">ยังไม่มีประวัติการตัดยอด<br>เมื่อบันทึกการจ่ายยา รายการจะแสดงที่นี่</div>';
+    : '<div class="empty">ยังไม่มีประวัติการทำรายการ<br>เมื่อบันทึกข้อมูล รายการจะแสดงที่นี่</div>';
 }
 function pickerHTML(){
   const d = drugById(form.drugId);
@@ -1016,7 +1167,7 @@ function renderMain(){
   '<section class="panel" aria-labelledby="ft"><h1 id="ft">จ่ายยา / ตัดสต็อก</h1>' +
     '<div class="field" id="f_queue"><label>คิว</label>' +
       '<div class="queue-row" style="margin-bottom:8px; flex-wrap:wrap;">' +
-        '<div class="seg" role="radiogroup" aria-label="ประเภทคิว" style="overflow-x:auto;">' + ['A','B','C','P','DC','D','DS','N'].map(l => '<button type="button" role="radio" aria-checked="' + (form.letter === l) + '" data-l="' + l + '" class="' + (form.letter === l ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' +
+        '<div class="seg" role="radiogroup" aria-label="ประเภทคิว" style="overflow-x:auto;">' + ['A','B','C','P','CD','D','DS'].map(l => '<button type="button" role="radio" aria-checked="' + (form.letter === l) + '" data-l="' + l + '" class="' + (form.letter === l ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' +
         '<input id="qnum" type="text" inputmode="numeric" autocomplete="off" placeholder="เลขคิว" aria-label="เลขคิว" style="flex:1; min-width:100px;" value="' + esc(form.qnum) + '">' +
       '</div>' +
       '<div class="queue-row" style="align-items:center; flex-wrap:wrap;">' +
@@ -1028,7 +1179,7 @@ function renderMain(){
           '<option value="OTHER" '+(form.qL2==='OTHER'?'selected':'')+'>อื่นๆ</option>' +
         '</select>' +
         '<input id="qOther" type="text" autocomplete="off" placeholder="ระบุ" style="display:'+(form.qL2==='OTHER'?'block':'none')+'; width:80px; font-size:18px; font-weight:bold; text-transform:uppercase; text-align:center;" value="' + esc(form.qOther) + '">' +
-        '<input id="qnum2" type="text" inputmode="numeric" autocomplete="off" placeholder="เลขคิว 4 หลัก" aria-label="เลขคิว 4 หลัก" maxlength="4" style="flex:1; min-width:140px;" value="' + esc(form.qnum2) + '">' +
+        '<input id="qnum2" type="text" inputmode="numeric" autocomplete="off" placeholder="เลขคิว 4 หลัก (เช่น 0255)" aria-label="เลขคิว 4 หลัก" maxlength="4" style="flex:1; min-width:140px;" value="' + esc(form.qnum2) + '">' +
       '</div>' +
     '</div>' +
     '<div class="field" id="f_rx"><label for="rx">เลขที่ใบสั่งยา (ไม่บังคับ)</label><input id="rx" type="text" autocomplete="off" placeholder="ยิงบาร์โค้ดเลขที่ใบสั่งยา (ถ้ามี)" value="' + esc(form.rx) + '"></div>' +
@@ -1138,7 +1289,7 @@ function bindMain(){
   bh.addEventListener('input', () => { form.bhis = bh.value; $('#f_bhis').classList.remove('err'); updateBhisHint(); });
   bh.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); submitMain(); } });
   $('#btnSave').addEventListener('click', submitMain);
-  $('#expMain').addEventListener('click', () => openExport('ประวัติการตัดยอดทั้งหมด', 'bah-history', [{name: 'ประวัติ', headers: LOG_HEAD, rows: logRows(DB.log.slice())}]));
+  $('#expMain').addEventListener('click', () => openExport('ประวัติการตัดยอดทั้งหมด', 'bah-history', [{name: 'ประวัติ', headers: LOG_HEAD, rows: logRows(getLogsView())}]));
 }
 function submitMain(){
   if (busy) return;
@@ -1246,11 +1397,15 @@ function showPrepare(drugId, qty, queue, rx){
 }
 
 /* ================= History ================= */
-function lastEntryOf(id){ for (let i = DB.log.length - 1; i >= 0; i--) if (DB.log[i].drugId === id) return DB.log[i]; return null; }
+function lastEntryOf(id){ 
+  const viewLog = getLogsView();
+  for (let i = viewLog.length - 1; i >= 0; i--) if (viewLog[i].drugId === id) return viewLog[i]; 
+  return null; 
+}
 function histItems(){
   const q = norm($('#hq') ? $('#hq').value : '');
   const items = DB.drugs.filter(d => !q || norm(d.name).includes(q) || norm(d.house).includes(q) || norm(d.barcode).includes(q))
-    .map(d => ({d, last: lastEntryOf(d.id), n: DB.log.filter(e => e.drugId === d.id).length}));
+    .map(d => ({d, last: lastEntryOf(d.id), n: getLogsView().filter(e => e.drugId === d.id).length}));
   items.sort((a, b) => (b.last ? b.last.ts : 0) - (a.last ? a.last.ts : 0) || a.d.name.localeCompare(b.d.name));
   return items;
 }
@@ -1264,13 +1419,13 @@ function drawHistIdx(){
 }
 function renderHistoryIndex(){
   view.innerHTML =
-    '<div class="pagehead"><h1>ประวัติการตัดยอดยา</h1><div class="btnrow"><button type="button" class="btn" id="expHist">Export</button><a class="backlink" style="margin:0" href="#/">กลับหน้าจ่ายยา</a></div></div>' +
-    '<section class="panel"><div class="field"><label for="hq">ค้นหายา</label><input id="hq" type="search" autocomplete="off" placeholder="พิมพ์ชื่อยา หรือบ้านเลขที่"></div>' +
+    '<div class="pagehead"><h1>ประวัติการทำรายการ</h1><div class="btnrow"><button type="button" class="btn" id="expHist">Export</button><a class="backlink" style="margin:0" href="#/">กลับหน้าจ่ายยา</a></div></div>' +
+    '<section class="panel">' + (currentRole === 'admin' ? '' : '<p class="msg info" style="margin-top:0">เจ้าหน้าที่ทั่วไปดูข้อมูลย้อนหลังได้ 3 วันล่าสุด</p>') + '<div class="field"><label for="hq">ค้นหายา</label><input id="hq" type="search" autocomplete="off" placeholder="พิมพ์ชื่อยา หรือบ้านเลขที่"></div>' +
     '<div class="scroll" id="hidx"></div></section>';
   $('#hq').addEventListener('input', drawHistIdx);
-  $('#expHist').addEventListener('click', () => openExport('ประวัติการตัดยอด', 'bah-history', [
+  $('#expHist').addEventListener('click', () => openExport('ประวัติการทำรายการ', 'bah-history', [
     {name: 'สรุปรายยา', headers: ['บ้านเลขที่','ชื่อยา','รายการล่าสุด','จำนวนรายการ','คงเหลือ'], rows: histItems().map(x => [x.d.house, x.d.name, x.last ? fmtDate(x.last.ts) + ' ' + fmtTime(x.last.ts) : '', x.n, x.d.stock])},
-    {name: 'ประวัติทั้งหมด', headers: LOG_HEAD, rows: logRows(DB.log.slice())}]));
+    {name: 'ประวัติทั้งหมด', headers: LOG_HEAD, rows: logRows(getLogsView())}]));
   drawHistIdx();
 }
 
@@ -1307,7 +1462,7 @@ function renderDrugHistory(id){
   view.innerHTML =
     '<a class="backlink" href="#/history">กลับไปรายการยา</a>' +
     '<section class="panel">' +
-    '<div class="summary"><div><div class="sub">ประวัติการตัดยอดของ</div><h1 style="margin:0">' + esc(d.name) + '</h1><div class="sub">บ้านเลขที่ ' + esc(d.house) + '</div></div>' +
+    '<div class="summary"><div><div class="sub">ประวัติการทำรายการของ</div><h1 style="margin:0">' + esc(d.name) + '</h1><div class="sub">บ้านเลขที่ ' + esc(d.house) + '</div></div>' +
     '<div class="btnrow" style="margin-left:auto">' +
     '<button type="button" class="btn primary" id="btnPrintDH">พิมพ์ประวัติ (Print)</button>' +
     '<button type="button" class="btn" id="expDH">Export</button>' +
@@ -1332,7 +1487,7 @@ function renderDrugHistory(id){
     const eD = $('#fEndD').value, eT = $('#fEndT').value;
     const qVal = $('#fQ').value;
     const sortVal = $('#fSort').value; 
-    const rawList = DB.log.filter(e => e.drugId === id);
+    const rawList = getLogsView().filter(e => e.drugId === id);
     
     let list = filterLogsByDateTime(rawList, sD, sT, eD, eT, qVal);
     
@@ -1346,15 +1501,20 @@ function renderDrugHistory(id){
     
     $('#dhTableBox').innerHTML = list.length
       ? '<table class="tbl"><thead><tr><th>วันที่</th><th>เวลา</th><th>รายการ</th><th class="num">จำนวน</th><th class="num">คงเหลือหลังรายการ</th><th>คิว / ใบสั่งยา</th>' + (showPt ? '<th>ผู้ใช้ยา</th>' : '') + '<th>ผู้ดำเนินการ</th><th>หมายเหตุ</th><th>จัดการ</th></tr></thead><tbody>' +
-        list.map(e => '<tr class="' + (VOIDED.has(e.id) ? 'voided' : '') + '"><td class="dt">' + fmtDate(e.ts) + '</td><td class="dt">' + fmtTime(e.ts) + '</td><td><span class="tag t-' + e.type + '">' + TYPE_LABEL[e.type] + '</span>' + (VOIDED.has(e.id) ? '<span class="tag t-void">ยกเลิกแล้ว</span>' : '') + '</td>' +
-          '<td class="num ' + (e.delta > 0 ? 'pos' : 'neg') + '">' + (e.delta > 0 ? '+' : '−') + fmt(Math.abs(e.delta)) + '</td><td class="num">' + fmt(e.balance) + '</td>' +
-          '<td>' + (e.queue ? esc(e.queue) + '<div class="sub">' + (e.rx ? esc(e.rx) : '-') + '</div>' : '<span class="sub">-</span>') + '</td>' +
-          (showPt ? '<td>' + (e.patient ? esc(e.patient) : '<span class="sub">-</span>') + '</td>' : '') +
-          '<td>' + (e.staffName ? esc(e.staffName) + '<div class="sub">BHIS ' + esc(e.bhis) + '</div>' : '<span class="sub">-</span>') + '</td><td>' + esc(e.note || '') + '</td>' +
-          '<td><div class="act-btns">' +
-          (!VOIDED.has(e.id) && e.type !== 'void' ? '<button type="button" class="btn small" data-editlog="' + e.id + '">แก้ไข</button>' : '') +
-          (e.type === 'dispense' && !VOIDED.has(e.id) ? '<button type="button" class="btn small" data-void="' + e.id + '">ยกเลิก</button>' : '') +
-          '</div></td></tr>').join('') + '</tbody></table>'
+        list.map(e => {
+            const sign = e.delta > 0 ? '+' : (e.delta < 0 ? '−' : '');
+            const cls = e.delta > 0 ? 'pos' : (e.delta < 0 ? 'neg' : '');
+            const dVal = e.delta === 0 ? '-' : fmt(Math.abs(e.delta));
+            return '<tr class="' + (VOIDED.has(e.id) ? 'voided' : '') + '"><td class="dt">' + fmtDate(e.ts) + '</td><td class="dt">' + fmtTime(e.ts) + '</td><td><span class="tag t-' + e.type + '">' + TYPE_LABEL[e.type] + '</span>' + (VOIDED.has(e.id) ? '<span class="tag t-void">ยกเลิกแล้ว</span>' : '') + '</td>' +
+            '<td class="num ' + cls + '">' + sign + dVal + '</td><td class="num">' + fmt(e.balance) + '</td>' +
+            '<td>' + (e.queue ? esc(e.queue) + '<div class="sub">' + (e.rx ? esc(e.rx) : '-') + '</div>' : '<span class="sub">-</span>') + '</td>' +
+            (showPt ? '<td>' + (e.patient ? esc(e.patient) : '<span class="sub">-</span>') + '</td>' : '') +
+            '<td>' + (e.staffName ? esc(e.staffName) + (e.bhis ? '<div class="sub">BHIS ' + esc(e.bhis) + '</div>' : '') : '<span class="sub">-</span>') + '</td><td>' + esc(e.note || '') + '</td>' +
+            '<td><div class="act-btns">' +
+            (!VOIDED.has(e.id) && e.type !== 'void' && e.type !== 'count' ? '<button type="button" class="btn small" data-editlog="' + e.id + '">แก้ไข</button>' : '') +
+            (e.type === 'dispense' && !VOIDED.has(e.id) ? '<button type="button" class="btn small" data-void="' + e.id + '">ยกเลิก</button>' : '') +
+            '</div></td></tr>';
+        }).join('') + '</tbody></table>'
       : '<div class="empty">ไม่พบประวัติที่ตรงกับเงื่อนไขการค้นหา</div>';
 
     $$('[data-editlog]').forEach(b => b.addEventListener('click', () => editLogModal(b.dataset.editlog)));
@@ -1373,7 +1533,7 @@ function renderDrugHistory(id){
 
   $('#btnPrintDH').addEventListener('click', () => bahPrintDrugHistory(id));
   $('#expDH').addEventListener('click', () => {
-    let list = filterLogsByDateTime(DB.log.filter(e => e.drugId === id), $('#fStartD').value, $('#fStartT').value, $('#fEndD').value, $('#fEndT').value, $('#fQ').value);
+    let list = filterLogsByDateTime(getLogsView().filter(e => e.drugId === id), $('#fStartD').value, $('#fStartT').value, $('#fEndD').value, $('#fEndT').value, $('#fQ').value);
     if ($('#fSort').value === 'desc') {
         list.sort((a, b) => b.ts - a.ts || (b.id < a.id ? -1 : 1));
     } else {
@@ -1411,8 +1571,8 @@ function bahMakeRealPrintRow(e){
   const cells = [
     [fmtDate(e.ts),fmtTime(e.ts)],
     [typ],
-    [delta > 0 ? fmt(delta) : ''],
-    [delta < 0 ? fmt(Math.abs(delta)) : ''],
+    [delta > 0 ? fmt(delta) : (e.type === 'count' ? '-' : '')],
+    [delta < 0 ? fmt(Math.abs(delta)) : (e.type === 'count' ? '-' : '')],
     [e.balance == null ? '' : fmt(e.balance)],
     [e.queue || '', e.rx ? 'Rx: ' + e.rx : ''],
     [e.patient ? 'ผู้ใช้ยา: ' + e.patient : '', e.note ? 'หมายเหตุ: ' + e.note : ''],
@@ -1498,7 +1658,7 @@ function bahPrepareHistoryPrint(id){
   if (!drug) throw new Error('ไม่พบข้อมูลยาที่ต้องการพิมพ์');
   const get=(id)=>{const el=$('#'+id);return el ? el.value : '';};
   const sd=get('fStartD'), st=get('fStartT'), ed=get('fEndD'), et=get('fEndT'), q=get('fQ');
-  const rows=filterLogsByDateTime(DB.log.filter(e => e.drugId===id),sd,st,ed,et,q);
+  const rows=filterLogsByDateTime(getLogsView().filter(e => e.drugId===id),sd,st,ed,et,q);
   const filtered=!!(sd||st||ed||et||q);
   const label=filtered ? 'เฉพาะรายการตามตัวกรองที่เลือก' : 'ประวัติทั้งหมด';
   const now=Date.now(), when=fmtDate(now)+' '+fmtTime(now);
@@ -1643,7 +1803,16 @@ function drawDrugDetail(id){
     return;
   }
   const p = packInfo(d);
-  box.innerHTML =
+  
+  const topSummaryHTML = `
+    <div class="panel" style="background:var(--brand-soft); border-color:var(--brand); text-align:center; margin-bottom:16px; padding:20px;">
+        <div style="color:var(--brand-dk); font-weight:600; font-size:16px; margin-bottom:4px;">จำนวนปัจจุบัน</div>
+        <div style="font-size:42px; font-weight:bold; color:var(--brand-dk); line-height:1; font-family:var(--mono);">${fmt(d.stock)} <span style="font-size:20px; font-family:var(--font);">${esc(p.unit)}</span></div>
+        ${hasPack(d) ? `<div style="font-size:18px; font-weight:600; color:var(--brand); margin-top:8px;">เท่ากับ ${esc(breakdownText(d.stock, d))}</div>` : ''}
+    </div>
+  `;
+
+  box.innerHTML = topSummaryHTML +
     '<div class="panel">' +
     '<div class="frow"><div class="lb">ชื่อยา</div><div class="val"><b>' + esc(d.name) + '</b></div><button type="button" class="btn small" data-edit="name">แก้ไข</button></div>' +
     '<div class="frow"><div class="lb">บ้านเลขที่</div><div class="val">' + esc(d.house) + '</div><button type="button" class="btn small" data-edit="house">แก้ไข</button></div>' +
@@ -1654,6 +1823,19 @@ function drawDrugDetail(id){
       '<div class="bc-actions"><button type="button" class="btn small" id="bcPrint">พิมพ์ป้ายบาร์โค้ด</button><button type="button" class="btn small" id="bcPng">บันทึกเป็นรูป PNG</button></div></div></div><span></span></div>' +
     '<div class="frow"><div class="lb">ยอดคงเหลือ (' + esc(p.unit) + ')</div><div class="val"><span class="bigstock">' + fmt(d.stock) + '</span>' + (p.tps ? '<div class="sub" style="font-size:15px">' + esc(breakdownText(d.stock, d)) + '</div>' : '') + '</div><button type="button" class="btn small" data-edit="stock">แก้ไข</button></div>' +
     '<div class="frow"><div class="lb">ระดับเตือนสต็อกต่ำ</div><div class="val">' + (d.minStock ? fmt(d.minStock) + ' ' + esc(p.unit) : '<span class="none">ยังไม่ได้ตั้งค่า</span>') + '</div><button type="button" class="btn small" data-edit="min">แก้ไข</button></div>' +
+    
+    '<div class="opbox" style="background:#F0FDF4; border-color:#86EFAC; margin-top:28px;">' +
+      '<h2 style="color:var(--ok)">ตรวจนับยา / ลงชื่อเวร</h2>' +
+      '<div class="opgrid" style="row-gap:12px;">' +
+        '<div class="field wide" style="margin-bottom:0;"><label>ช่วงเวลา / หน้าที่</label><select id="cntRole"><option value="เจ้าหน้าที่ทั่วไป">เจ้าหน้าที่ทั่วไป</option><option value="แม่เวรตอนเปิดเวร">แม่เวรตอนเปิดเวร</option><option value="แม่เวรตอนปิดเวร">แม่เวรตอนปิดเวร</option></select></div>' +
+        '<div class="field" style="margin-bottom:0;"><label>เลข BHIS</label><input id="cntBhis" type="text" autocomplete="off" placeholder="ระบุ BHIS (ถ้ามี)"></div>' +
+        '<div class="field" style="margin-bottom:0;"><label>ชื่อ-นามสกุล</label><input id="cntName" type="text" autocomplete="off" placeholder="ระบุชื่อ (ดึงอัตโนมัติหากมี BHIS)"></div>' +
+        '<div class="field wide"><label>หมายเหตุ</label><input id="cntNote" type="text" autocomplete="off" placeholder="เช่น ยอดตรงปก หรือ หมายเหตุอื่นๆ"></div>' +
+      '</div>' +
+      '<button type="button" class="btn primary" id="btnCount" style="background:var(--ok); border-color:var(--ok); font-size:16px;">ยืนยันการตรวจนับยา</button>' +
+      '<div class="form-err" id="cntErr" role="alert"></div>' +
+    '</div>' +
+
     '<div class="opbox"><h2>เติม / หักสต็อก</h2><div class="opgrid">' +
       '<div class="field"><label for="opAdd">เติมสต็อก (บวกเข้ายอด)</label><div class="qtyrow"><input id="opAdd" type="text" inputmode="decimal" autocomplete="off" placeholder="จำนวนที่เติม"><select id="opAddU" aria-label="หน่วย">' + unitOptions(d) + '</select></div></div>' +
       '<div class="field"><label for="opDed">หักสต็อกนอกเหนือจากการจ่ายยา</label><div class="qtyrow"><input id="opDed" type="text" inputmode="decimal" autocomplete="off" placeholder="จำนวนที่หัก"><select id="opDedU" aria-label="หน่วย">' + unitOptions(d) + '</select></div></div>' +
@@ -1663,13 +1845,16 @@ function drawDrugDetail(id){
       '<div class="form-err" id="opErr" role="alert"></div></div>' +
     '<div class="btnrow" style="margin-top:16px"><a class="backlink" style="margin:0" href="#/history/' + d.id + '">ดูประวัติการตัดยอดของยาตัวนี้</a><button type="button" class="btn small" id="expOne">Export ข้อมูลยาตัวนี้</button></div>' +
     '<div class="dangerzone"><button type="button" class="btn" id="btnDelete">ลบข้อมูลยาตัวนี้</button></div></div>';
+  
   $$('[data-edit]', box).forEach(b => b.addEventListener('click', () => editField(d.id, b.dataset.edit)));
   $('#bcPrint').addEventListener('click', () => printBarcode(d));
   $('#bcPng').addEventListener('click', () => svgToPNG(barcodeSVG(d.barcode, {module: 3, height: 90}), b => saveFile('barcode-' + d.barcode + '.png', b)));
   $('#btnDelete').addEventListener('click', () => deleteDrug(d.id));
   $('#expOne').addEventListener('click', () => openExport('ข้อมูลและประวัติ ' + d.name, 'bah-' + d.house, [
     {name: 'ข้อมูลยา', headers: DRUG_HEAD, rows: drugRows([d])},
-    {name: 'ประวัติ', headers: LOG_HEAD, rows: logRows(DB.log.filter(e => e.drugId === d.id))}]));
+    {name: 'ประวัติ', headers: LOG_HEAD, rows: logRows(getLogsView().filter(e => e.drugId === d.id))}]));
+  
+  // Logic for Stock Adjust (Add/Deduct)
   const upd = () => {
     const cur = drugById(id); if (!cur) return;
     const a = parseQty($('#opAdd').value || '0') * opMult($('#opAddU'), cur), r = parseQty($('#opDed').value || '0') * opMult($('#opDedU'), cur);
@@ -1682,7 +1867,40 @@ function drawDrugDetail(id){
   ['opAdd', 'opDed', 'opBhis', 'opAddU', 'opDedU'].forEach(i => $('#' + i).addEventListener('input', upd));
   $('#opSave').addEventListener('click', () => submitStockOp(d.id));
   $('#opBhis').addEventListener('keydown', e => { if (e.key === 'Enter') submitStockOp(d.id); });
+
+  // Logic for Stock Count
+  const cBh = $('#cntBhis'), cNm = $('#cntName');
+  cBh.addEventListener('input', () => {
+     const s = staffByBhis(cBh.value);
+     if (s) { cNm.value = s.name; cNm.readOnly = true; cNm.style.background = '#F1F5F8'; }
+     else { cNm.value = ''; cNm.readOnly = false; cNm.style.background = '#fff'; }
+  });
+  $('#btnCount').addEventListener('click', async () => {
+     if (busy) return;
+     const err = $('#cntErr'); err.textContent = '';
+     const roleTxt = $('#cntRole').value;
+     const bhisVal = cBh.value.trim();
+     const nameVal = cNm.value.trim();
+     const noteVal = $('#cntNote').value.trim();
+
+     if (!nameVal) { err.textContent = 'กรุณาระบุชื่อ-นามสกุล หรือกรอก BHIS ให้ถูกต้องเพื่อดึงชื่อ'; return; }
+     
+     const finalNote = roleTxt + (noteVal ? ' (' + noteVal + ')' : '');
+
+     busy = true;
+     try {
+       await addLogs([{
+          id: uid(), ts: Date.now(), type: 'count', drugId: d.id, drugName: d.name, house: d.house,
+          delta: 0, bhis: bhisVal, staffName: nameVal, note: finalNote
+       }]);
+       toast('บันทึกการตรวจนับยาแล้ว', 'ok');
+       $('#cntNote').value = '';
+     } catch(e){ err.textContent = errText(e); }
+     busy = false;
+  });
+
 }
+
 async function submitStockOp(id){
   if (busy) return;
   const d = drugById(id); if (!d) return;
@@ -1900,7 +2118,7 @@ function exportJSON(){ saveFile('bah-backup-' + stamp() + '.json', JSON.stringif
 function exportAll(){
   openExport('ข้อมูลทั้งหมด', 'bah-all', [
     {name: 'ข้อมูลยา', headers: DRUG_HEAD, rows: drugRows(DB.drugs)},
-    {name: 'ประวัติการตัดยอด', headers: LOG_HEAD, rows: logRows(DB.log.slice())},
+    {name: 'ประวัติการตัดยอด', headers: LOG_HEAD, rows: logRows(getLogsView())},
     {name: 'เจ้าหน้าที่', headers: STAFF_HEAD, rows: staffRows()}]);
 }
 function importJSON(file){
@@ -1920,7 +2138,7 @@ function importJSON(file){
   rd.readAsText(file);
 }
 function changePassModal(){
-  formModal({title: 'เปลี่ยนรหัสผ่าน', width: 460,
+  formModal({title: 'เปลี่ยนรหัสผ่านเจ้าหน้าที่', width: 460,
     fields: [{id: 'c', label: 'รหัสผ่านปัจจุบัน', type: 'password'}, {id: 'n', label: 'รหัสผ่านใหม่', type: 'password'}, {id: 'r', label: 'ยืนยันรหัสผ่านใหม่', type: 'password'}],
     onSubmit: async v => {
       if (!checkPass(v.c)) return 'รหัสผ่านปัจจุบันไม่ถูกต้อง';
@@ -1928,47 +2146,82 @@ function changePassModal(){
       if (v.n === v.c) return 'รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสเดิม';
       if (v.n !== v.r) return 'รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน';
       const salt = uid(), auth = {salt, hash: sha256hex(salt + '|' + v.n), changedAt: Date.now()};
+      
+      const combinedAuth = Object.assign({}, DB.auth || {}, auth);
+      
       const oldTok = unlockTok;
-      unlockTok = sha256hex('tok|' + auth.hash);
+      unlockTok = sha256hex('tok|staff|' + auth.hash);
       try{ sessionStorage.setItem('bah.unlock', unlockTok); }catch(_){}
-      try{ await saveAuth(auth); }
+      try{ await saveAuth(combinedAuth); }
       catch(e){ unlockTok = oldTok; try{ if (oldTok) sessionStorage.setItem('bah.unlock', oldTok); }catch(_){} throw e; }
       updateBanner();
       toast('เปลี่ยนรหัสผ่านแล้ว', 'ok');
     }});
 }
+function changeAdminPassModal(){
+  formModal({title: 'เปลี่ยนข้อมูลแอดมิน', width: 460,
+    fields: [
+      {id: 'u', label: 'Username ใหม่', value: (DB.auth && DB.auth.adminUser) || 'admin'}, 
+      {id: 'n', label: 'รหัสผ่านใหม่', type: 'password'}, 
+      {id: 'r', label: 'ยืนยันรหัสผ่านใหม่', type: 'password'}
+    ],
+    onSubmit: async v => {
+      if (v.n.length < 4) return 'รหัสผ่านใหม่ต้องมีอย่างน้อย 4 ตัวอักษร';
+      if (v.n !== v.r) return 'รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน';
+      if (!v.u.trim()) return 'กรุณาระบุ Username';
+      
+      const adminSalt = uid();
+      const adminHash = sha256hex(adminSalt + '|' + v.n);
+      const adminUser = v.u.trim();
+      
+      const combinedAuth = Object.assign({}, DB.auth || {}, {adminUser, adminHash, adminSalt, adminChangedAt: Date.now()});
+      
+      const oldTok = unlockTok;
+      unlockTok = sha256hex('tok|admin|' + adminHash);
+      try{ sessionStorage.setItem('bah.unlock', unlockTok); }catch(_){}
+      try{ await saveAuth(combinedAuth); }
+      catch(e){ unlockTok = oldTok; try{ if (oldTok) sessionStorage.setItem('bah.unlock', oldTok); }catch(_){} throw e; }
+      updateBanner();
+      toast('เปลี่ยนข้อมูลแอดมินแล้ว', 'ok');
+    }});
+}
+
 function firebaseStatusHTML(){
   const cfg = getFirebaseConfig();
   if (MODE === 'cloud' && cfg) return '<div class="msg info" style="font-size:14px">เชื่อมต่อแล้ว · โปรเจกต์ Firebase: <b>' + esc(cfg.projectId || '') + '</b></div>';
   if (cfg && MODE !== 'cloud') return '<div class="msg danger" style="font-size:14px">มีการตั้งค่าไว้ แต่เชื่อมต่อไม่สำเร็จ</div>';
   return '<div class="msg warn" style="font-size:14px">ยังไม่ได้เชื่อมต่อ เครื่องนี้ทำงานแบบเดี่ยว</div>';
 }
-function openFirebaseHelp(){
-  alertBox('วิธีตั้งค่าระบบซิงก์ออนไลน์', '', {width: 600, okText: 'เข้าใจแล้ว', html:
-    '<ol style="padding-left:20px;margin:0"><li>ไปที่ <a href="https://console.firebase.google.com" target="_blank" rel="noopener">console.firebase.google.com</a></li></ol>'});
-}
 function openSettings(){
+  const isAdmin = currentRole === 'admin';
   openModal({title: 'ตั้งค่า', width: 580,
     html: '<p class="msg info" style="margin-bottom:14px">' + (MODE === 'cloud' ? 'ข้อมูลเก็บบนเซิร์ฟเวอร์และซิงก์ทุกเครื่อง' : 'ข้อมูลถูกเก็บในเบราว์เซอร์เครื่องนี้') + '</p>' +
       '<div class="sec-title">ความปลอดภัย</div>' +
-      '<div class="setrow"><button type="button" class="btn" id="sPass">เปลี่ยนรหัสผ่าน</button></div>' +
+      '<div class="setrow"><button type="button" class="btn" id="sPass">เปลี่ยนรหัสเจ้าหน้าที่</button>' +
+      (isAdmin ? '<button type="button" class="btn ghost" id="sPassAdmin" style="color:var(--ink); border-color:var(--line);">เปลี่ยนรหัสแอดมิน</button>' : '') + '</div>' +
       '<div class="field" style="max-width:320px"><label for="sLock">ล็อกอัตโนมัติหลังไม่ใช้งาน (นาที)</label><input id="sLock" type="text" inputmode="numeric" data-noenter="1" value="' + esc(DB.settings.autoLockMin) + '"></div>' +
       '<div class="sec-title">กฎการตัดสต็อก</div>' +
       '<div class="switch"><input type="checkbox" id="sNeg"' + (DB.settings.allowNegative ? ' checked' : '') + '><label for="sNeg">อนุญาตให้จ่ายยาเกินสต็อก (ยอดติดลบได้)</label></div>' +
-      '<div class="sec-title">ระบบซิงก์ออนไลน์ (Firebase)</div>' +
-      firebaseStatusHTML() +
-      '<div class="field" style="margin-top:10px"><label for="fbConfig">วางค่า firebaseConfig</label><textarea id="fbConfig" rows="4"></textarea></div>' +
-      '<div class="form-err" id="fbErr" role="alert"></div>' +
-      '<div class="setrow"><button type="button" class="btn primary" id="fbSave">บันทึกและเชื่อมต่อ</button>' + (getFirebaseConfig() ? '<button type="button" class="btn" id="fbClear" style="color:var(--danger);border-color:var(--danger)">ยกเลิกการเชื่อมต่อ</button>' : '') + '</div>' +
+      
+      (isAdmin ? 
+        '<div class="sec-title">ระบบซิงก์ออนไลน์ (Firebase)</div>' +
+        firebaseStatusHTML() +
+        '<div class="field" style="margin-top:10px"><label for="fbConfig">วางค่า firebaseConfig</label><textarea id="fbConfig" rows="4"></textarea></div>' +
+        '<div class="form-err" id="fbErr" role="alert"></div>' +
+        '<div class="setrow"><button type="button" class="btn primary" id="fbSave">บันทึกและเชื่อมต่อ</button>' + (getFirebaseConfig() ? '<button type="button" class="btn" id="fbClear" style="color:var(--danger);border-color:var(--danger)">ยกเลิกการเชื่อมต่อ</button>' : '') + '</div>'
+      : '') +
+      
       '<div class="sec-title">ข้อมูล</div>' +
       '<div class="setrow"><button type="button" class="btn" id="sExpAll">Export ข้อมูลทั้งหมด</button><button type="button" class="btn" id="sExpJ">สำรองข้อมูล (.json)</button></div>' +
-      (MODE === 'local' ? '<div class="setrow"><button type="button" class="btn" id="sImp">นำเข้าจากไฟล์สำรอง (.json)</button><input type="file" id="sFile" accept=".json,application/json" hidden></div>' : ''),
+      (MODE === 'local' && isAdmin ? '<div class="setrow"><button type="button" class="btn" id="sImp">นำเข้าจากไฟล์สำรอง (.json)</button><input type="file" id="sFile" accept=".json,application/json" hidden></div>' : ''),
     actions: [{label: 'ปิด', cls: 'primary', primary: true, onClick: m => m.close()}],
     onMount: m => {
       $('#sPass', m.el).addEventListener('click', () => { m.close(); changePassModal(); });
+      if (isAdmin && $('#sPassAdmin', m.el)) $('#sPassAdmin', m.el).addEventListener('click', () => { m.close(); changeAdminPassModal(); });
+      
       $('#sExpAll', m.el).addEventListener('click', () => { m.close(); exportAll(); });
       $('#sExpJ', m.el).addEventListener('click', exportJSON);
-      if (MODE === 'local'){
+      if (MODE === 'local' && isAdmin && $('#sImp', m.el)){
         $('#sImp', m.el).addEventListener('click', () => $('#sFile', m.el).click());
         $('#sFile', m.el).addEventListener('change', e => { const f = e.target.files[0]; if (f){ m.close(); importJSON(f); } });
       }
@@ -1980,24 +2233,27 @@ function openSettings(){
         if (!Number.isFinite(n) || n < 0){ e.target.value = DB.settings.autoLockMin; toast('กรอกจำนวนนาทีเป็นตัวเลข 0 ขึ้นไป', 'err'); return; }
         try{ await saveSettings({autoLockMin: Math.round(n)}); toast('บันทึกการล็อกอัตโนมัติแล้ว', 'ok'); }catch(er){ toast(errText(er), 'err'); }
       });
-      const fbSave = $('#fbSave', m.el);
-      if (fbSave) fbSave.addEventListener('click', () => {
-        const raw = $('#fbConfig', m.el).value.trim();
-        const err = $('#fbErr', m.el);
-        if (!raw){ err.textContent = 'กรุณาวางค่า firebaseConfig ก่อน'; return; }
-        let cfg;
-        try{ cfg = new Function('return (' + raw + ')')(); }
-        catch(e){ err.textContent = 'อ่านค่าที่วางไม่ได้'; return; }
-        if (!cfg || !cfg.apiKey || !cfg.projectId){ err.textContent = 'ค่านี้ดูไม่เหมือน firebaseConfig'; return; }
-        saveFirebaseConfig(cfg);
-        toast('บันทึกแล้ว กำลังเชื่อมต่อใหม่…', 'ok');
-        setTimeout(() => location.reload(), 400);
-      });
-      const fbClear = $('#fbClear', m.el);
-      if (fbClear) fbClear.addEventListener('click', () => {
-        confirmBox('ยกเลิกการเชื่อมต่อ Firebase?', '', {danger: true, okText: 'ตกลง ยกเลิกการเชื่อมต่อ', tone: 'danger',
-          onOk: () => { clearFirebaseConfig(); toast('ยกเลิกการเชื่อมต่อแล้ว', 'ok'); setTimeout(() => location.reload(), 400); }});
-      });
+      
+      if (isAdmin) {
+        const fbSave = $('#fbSave', m.el);
+        if (fbSave) fbSave.addEventListener('click', () => {
+          const raw = $('#fbConfig', m.el).value.trim();
+          const err = $('#fbErr', m.el);
+          if (!raw){ err.textContent = 'กรุณาวางค่า firebaseConfig ก่อน'; return; }
+          let cfg;
+          try{ cfg = new Function('return (' + raw + ')')(); }
+          catch(e){ err.textContent = 'อ่านค่าที่วางไม่ได้'; return; }
+          if (!cfg || !cfg.apiKey || !cfg.projectId){ err.textContent = 'ค่านี้ดูไม่เหมือน firebaseConfig'; return; }
+          saveFirebaseConfig(cfg);
+          toast('บันทึกแล้ว กำลังเชื่อมต่อใหม่…', 'ok');
+          setTimeout(() => location.reload(), 400);
+        });
+        const fbClear = $('#fbClear', m.el);
+        if (fbClear) fbClear.addEventListener('click', () => {
+          confirmBox('ยกเลิกการเชื่อมต่อ Firebase?', '', {danger: true, okText: 'ตกลง ยกเลิกการเชื่อมต่อ', tone: 'danger',
+            onOk: () => { clearFirebaseConfig(); toast('ยกเลิกการเชื่อมต่อแล้ว', 'ok'); setTimeout(() => location.reload(), 400); }});
+        });
+      }
     }});
 }
 $('#btnSettings').addEventListener('click', openSettings);
@@ -2029,3 +2285,4 @@ window.__app = {get DB(){ return DB; }, get MODE(){ return MODE; }, code128Value
 </script>
 </body>
 </html>
+```
